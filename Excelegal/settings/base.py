@@ -176,3 +176,6 @@ REST_FRAMEWORK = {
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+CLIENT_ID = env.GOOGLE_CLIENT_ID
+CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET

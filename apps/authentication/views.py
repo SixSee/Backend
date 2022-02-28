@@ -1,4 +1,8 @@
+from urllib.parse import urlencode
+
 from django.http import HttpResponse
+from django.shortcuts import redirect
+from rest_framework import serializers
 from rest_framework import status as s
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,6 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from .serializers import UserSerializer
+from .utils import GoogleOAuthApi, GoogleConnectError
 
 
 def ping(request):
@@ -39,11 +44,35 @@ class UserLogin(APIView):
             else:
                 return Response({"message": "Email or Password incorrect"})
 
+
 class GoogleLogin(APIView):
     class InputSerializer(serializers.Serializer):
         code = serializers.CharField(required=False)
         error = serializers.CharField(required=False)
-    def get(self,request,format=None):
+
+    def get(self, request, format=None):
         input_serializer = self.InputSerializer(data=request.GET)
         input_serializer.is_valid(raise_exception=True)
-        body = 
+        body = input_serializer.data
+
+        code = body.get('code')
+        error = body.get('error')
+
+        login_url = "http://localhost:3000/login"
+
+        if error or not code:
+            params = urlencode({'error': error})
+            return redirect(f'{login_url}?{params}')
+
+        # todo -> Change this later
+        redirect_url = "http://localhost:8000/auth/login/google/"
+
+        try:
+            gapi = GoogleOAuthApi(code=code, redirect_url=redirect_url)
+            access_token = gapi.ACCESS_TOKEN
+            user_info = gapi.get_user_info()
+
+        except GoogleConnectError as e:
+            return Response(e.args)
+
+        return redirect("https://localhost:3000/")

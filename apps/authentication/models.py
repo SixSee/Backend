@@ -12,7 +12,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     is_email_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now=True)
-
+    access_token = models.CharField(max_length=255, blank=True, null=True)
     objects = CustomUserManager()
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
