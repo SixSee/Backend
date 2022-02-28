@@ -71,8 +71,9 @@ class GoogleLogin(APIView):
             gapi = GoogleOAuthApi(code=code, redirect_url=redirect_url)
             access_token = gapi.ACCESS_TOKEN
             user_info = gapi.get_user_info()
-
-        except GoogleConnectError as e:
-            return Response(e.args)
+            # todo -> Get or create user based on user info and login
+            print(user_info)
+        except GoogleConnectError as error:
+            return Response(error.args)
 
         return redirect("https://localhost:3000/")

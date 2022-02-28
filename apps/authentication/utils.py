@@ -22,8 +22,7 @@ class GoogleOAuthApi:
             self.ACCESS_TOKEN = self.get_access_token()
 
     def get_user_info(self):
-        response = requests.get(self.GOOGLE_USER_INFO_URL,  headers={'Authorization': self.ACCESS_TOKEN})
-
+        response = requests.get(self.GOOGLE_USER_INFO_URL,  headers={'Authorization': f"Bearer {self.ACCESS_TOKEN}"})
         if response.ok:
             return response.json()
         else:
