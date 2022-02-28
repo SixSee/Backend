@@ -11,7 +11,7 @@ class User(AbstractUser):
     username = models.CharField(max_length=100, blank=True, null=True)
     email = models.EmailField(unique=True)
     is_email_verified = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now=True)
+    from_google = models.BooleanField(default=False)
     access_token = models.CharField(max_length=255, blank=True, null=True)
     objects = CustomUserManager()
     USERNAME_FIELD = 'email'

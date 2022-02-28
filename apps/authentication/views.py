@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from .serializers import UserSerializer
-from .utils import GoogleOAuthApi, GoogleConnectError
+from .utils import GoogleOAuthApi, GoogleConnectError, create_user
 
 
 def ping(request):
@@ -58,22 +58,30 @@ class GoogleLogin(APIView):
         code = body.get('code')
         error = body.get('error')
 
+        # todo -> Change this later
         login_url = "http://localhost:3000/login"
+        redirect_url = "http://localhost:8000/auth/login/google/"
 
         if error or not code:
             params = urlencode({'error': error})
             return redirect(f'{login_url}?{params}')
 
-        # todo -> Change this later
-        redirect_url = "http://localhost:8000/auth/login/google/"
-
         try:
             gapi = GoogleOAuthApi(code=code, redirect_url=redirect_url)
             access_token = gapi.ACCESS_TOKEN
-            user_info = gapi.get_user_info()
-            # todo -> Get or create user based on user info and login
-            print(user_info)
+            user_info: dict = gapi.get_user_info()
         except GoogleConnectError as error:
             return Response(error.args)
 
-        return redirect("https://localhost:3000/")
+        user = User.objects.filter(email=user_info.get('email')).first()
+        if not user:
+            user = create_user(email=user_info.get('email'), password=None,
+                               **{"first_name": user_info.get('given_name'),
+                                  "last_name": user_info.get('family_name'),
+                                  "access_token": access_token,
+                                  "from_google": True,
+                                  "is_email_verified": user_info.get('email_verified')})
+
+        refresh = RefreshToken.for_user(user)
+        params = urlencode({'access': refresh.access_token, 'refresh': str(refresh)})
+        return redirect(f"{login_url}?{params}")

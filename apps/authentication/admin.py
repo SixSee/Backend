@@ -8,16 +8,16 @@ class UserAdmin(admin.ModelAdmin):
     list_display = (
         'email',
         'is_email_verified',
-        'created_at',
-        'password',
+        'from_google',
         'last_login',
+        'id',
+        'password',
         'is_superuser',
         'first_name',
         'last_name',
         'is_staff',
         'is_active',
         'date_joined',
-        'id',
         'username',
     )
     list_filter = (
@@ -27,7 +27,6 @@ class UserAdmin(admin.ModelAdmin):
         'is_active',
         'date_joined',
         'is_email_verified',
-        'created_at',
     )
     raw_id_fields = ('groups', 'user_permissions')
-    date_hierarchy = 'created_at'
+    date_hierarchy = 'date_joined'
