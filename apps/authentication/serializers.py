@@ -1,7 +1,9 @@
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+
 from .models import User
-from django.contrib.auth.password_validation import validate_password
+
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -12,7 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'password')
+        fields = ('id', 'email', 'password', 'first_name', 'last_name')
         extra_kwargs = {
             'id': {'read_only': True}
         }

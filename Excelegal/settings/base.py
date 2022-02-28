@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "apps.authentication.apps.AuthenticationConfig"
 ]
 
+AUTH_USER_MODEL = "authentication.User"
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -140,7 +142,7 @@ LOGGING = {
     },
     'loggers': {
         'django.db.backends': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'handlers': ['console'],
         }
     },
@@ -171,3 +173,6 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]

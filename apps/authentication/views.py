@@ -38,3 +38,12 @@ class UserLogin(APIView):
                 return Response({'refresh': str(refresh), 'access': str(refresh.access_token)})
             else:
                 return Response({"message": "Email or Password incorrect"})
+
+class GoogleLogin(APIView):
+    class InputSerializer(serializers.Serializer):
+        code = serializers.CharField(required=False)
+        error = serializers.CharField(required=False)
+    def get(self,request,format=None):
+        input_serializer = self.InputSerializer(data=request.GET)
+        input_serializer.is_valid(raise_exception=True)
+        body = 
