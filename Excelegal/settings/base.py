@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "django_extensions",
     # Apps
-    "apps.authentication.apps.AuthenticationConfig"
+    "apps.authentication.apps.AuthenticationConfig",
+    "apps.courses.apps.CoursesConfig"
 ]
 
 AUTH_USER_MODEL = "authentication.User"
