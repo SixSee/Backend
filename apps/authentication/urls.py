@@ -3,8 +3,7 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('ping/', ping),
-    # user Login and Signup
+    # User Login and Signup
     path('token', UserLogin.as_view(), name='TOKEN_OBTAIN'),
     path('login/google/', GoogleLogin.as_view(), name='GOOGLE_LOGIN'),
     path('signup', UserSignup.as_view(), name='SIGNUP'),

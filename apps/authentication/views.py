@@ -1,6 +1,5 @@
 from urllib.parse import urlencode
 
-from django.http import HttpResponse
 from django.shortcuts import redirect
 from rest_framework import serializers
 from rest_framework import status as s
@@ -11,10 +10,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .serializers import UserSerializer
 from .utils import GoogleOAuthApi, GoogleConnectError, create_user
-
-
-def ping(request):
-    return HttpResponse("pong")
 
 
 class UserSignup(APIView):
