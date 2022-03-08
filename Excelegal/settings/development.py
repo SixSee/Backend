@@ -2,7 +2,6 @@ from .base import *
 
 INSTALLED_APPS += [
     'drf_yasg',
-"silk"
 ]
 INTERNAL_IPS = [
     '127.0.0.1',
