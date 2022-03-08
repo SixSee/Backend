@@ -1,3 +1,4 @@
+from datetime import datetime
 from urllib.parse import urlencode
 
 from django.shortcuts import redirect
@@ -35,6 +36,8 @@ class UserLogin(APIView):
         else:
             if user.check_password(password):
                 refresh = RefreshToken.for_user(user)
+                user.last_login = datetime.now()
+                user.save()
                 return Response({'refresh': str(refresh), 'access': str(refresh.access_token)})
             else:
                 return Response({"message": "Email or Password incorrect"})
