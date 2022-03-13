@@ -110,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Simple jwt Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=2),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=6),
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,

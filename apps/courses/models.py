@@ -18,7 +18,7 @@ class Course(models.Model):
 
 
 class Topic(models.Model):
-    course = models.ForeignKey(Course,on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
     title = models.CharField(max_length=255, blank=True, null=True)
     slug = models.CharField(max_length=319, blank=True, null=True)
     index = models.IntegerField(default=0, blank=True, null=True)
@@ -26,3 +26,6 @@ class Topic(models.Model):
     views = models.BigIntegerField()
     created_at = models.DateTimeField(auto_now=True)
     updated_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.title}"
