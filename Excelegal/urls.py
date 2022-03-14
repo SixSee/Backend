@@ -34,7 +34,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('apps.authentication.urls')),
-    path('course/', include('apps.courses.urls'))
+    path('', include('apps.courses.urls'))
 ]
 
 if DEBUG:

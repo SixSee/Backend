@@ -23,7 +23,7 @@ class Topic(models.Model):
     slug = models.CharField(max_length=319, blank=True, null=True)
     index = models.IntegerField(default=0, blank=True, null=True)
     text = models.TextField()
-    views = models.BigIntegerField()
+    views = models.BigIntegerField(default=0)
     created_at = models.DateTimeField(auto_now=True)
     updated_at = models.DateTimeField(blank=True, null=True)
 
