@@ -13,6 +13,7 @@ class User(AbstractUser):
     is_email_verified = models.BooleanField(default=False)
     from_google = models.BooleanField(default=False)
     access_token = models.CharField(max_length=255, blank=True, null=True)
+    device_id = models.UUIDField(blank=True, null=True)
     ADMIN = 3
     STAFF = 2
     STUDENT = 1
