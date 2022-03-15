@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django.shortcuts import redirect
 from rest_framework import serializers
 from rest_framework import status as s
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -11,6 +12,29 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .serializers import UserSerializer
 from .utils import GoogleOAuthApi, GoogleConnectError, create_user
+
+
+class AdminLogin(APIView):
+    def post(self, request, format=None):
+        body = request.data
+        if ("email" not in body) or ("password" not in body):
+            return Response({"message": "email and password required"})
+        email = body.get('email')
+        password = body.get('password')
+        if not user:
+            return Response({"message": "No user with provided email"})
+        else:
+            if user.role < user.STAFF:
+                return Response({"msg": "You dont have permission to login"}, s.HTTP_400_BAD_REQUEST)
+
+            if user.check_password(password):
+                refresh = RefreshToken.for_user(user)
+                user.last_login = datetime.now()
+                user.save()
+                return Response({'refresh': str(refresh), 'access': str(refresh.access_token)})
+
+            else:
+                return Response({"message": "Email or Password incorrect"})
 
 
 class UserSignup(APIView):
@@ -83,3 +107,18 @@ class GoogleLogin(APIView):
         refresh = RefreshToken.for_user(user)
         params = urlencode({'access': refresh.access_token, 'refresh': str(refresh)})
         return redirect(f"{login_url}?{params}")
+
+
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = User
+            fields = ('id', 'email', 'password', 'first_name', 'last_name', 'role',
+                      'device_id', 'is_email_verified')
+
+    def get(self, request):
+        user = request.user
+        serializer = self.OutputSerializer(data=user)
+        return Response(serializer.data)
