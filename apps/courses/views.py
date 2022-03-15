@@ -23,10 +23,13 @@ class CreateCourseViewSet(ViewSet):
 
     def list(self, request):
         user = request.user
-        if user.role >= user.MENTOR:
+
+        if user.isAdmin():
             courses = Course.objects.all()
-        else:
+        elif user.isStaff():
             courses = Course.objects.filter(owner=user, is_archived=False)
+        else:
+            return Response({"msg": "invalid perms"}, s.HTTP_400_BAD_REQUEST)
         serializer = self.OutputSerializer(courses, many=True)
         return Response(serializer.data)
 
@@ -43,21 +46,20 @@ class CreateCourseViewSet(ViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, s.HTTP_400_BAD_REQUEST)
 
-        if "owner" in body.keys():
+        if "owner" in body.keys() and user.isAdmin():
             course_owner_uuid = body.get('owner')
             course_owner = User.objects.filter(pk=course_owner_uuid).first()
             if course_owner is None:
                 return Response({"msg": "no user with this id"}, status=s.HTTP_400_BAD_REQUEST)
 
-            if (course_owner is not None) and user.role >= user.MENTOR:
-                course = Course(owner=course_owner, **serializer.data)
-            else:
-                course = Course(owner=user, **serializer.data)
+            course = Course(owner=course_owner, **serializer.data)
 
-        else:
+        elif user.isStaff():
             course = Course(owner=user, **serializer.data)
-        course.save()
+        else:
+            return Response({"msg": "invalid perms"}, s.HTTP_400_BAD_REQUEST)
 
+        course.save()
         return Response(serializer.data, s.HTTP_201_CREATED)
 
     def update(self, request, pk=None):
@@ -65,14 +67,15 @@ class CreateCourseViewSet(ViewSet):
         course = Course.objects.filter(pk=pk).first()
         if not course:
             return Response({'msg': 'No course with this id'}, s.HTTP_400_BAD_REQUEST)
+
         body = request.data
-        if course.owner == user or user.role >= user.MENTOR:
+        if course.owner == user or user.isAdmin():
             course.title = body.get('title', course.title)
             course.description = body.get('description', course.description)
             course.updated_at = datetime.now()
             course.save()
         else:
-            return Response({"msg": "you dont have perms"}, s.HTTP_400_BAD_REQUEST)
+            return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
         return Response({"msg": "Updated"}, s.HTTP_200_OK)
 
     def destroy(self, request, pk=None):
@@ -81,10 +84,10 @@ class CreateCourseViewSet(ViewSet):
         if not course:
             return Response({'msg': 'No course with this id'}, s.HTTP_400_BAD_REQUEST)
 
-        if course.owner == user or user.role >= user.MENTOR:
+        if course.owner == user or user.isAdmin():
             course.delete()
         else:
-            return Response({"msg": "you dont have perms"}, s.HTTP_400_BAD_REQUEST)
+            return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
         return Response({"msg": "updated"}, s.HTTP_200_OK)
 
 
@@ -92,7 +95,6 @@ class CreateCourseTopicViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
 
     class InputSerializer(serializers.Serializer):
-        course_id = serializers.CharField(max_length=255)
         title = serializers.CharField(max_length=255, required=True)
         index = serializers.IntegerField(required=True)
         text = serializers.CharField(required=True)
@@ -114,18 +116,46 @@ class CreateCourseTopicViewSet(ViewSet):
         if topic:
             serializer = self.OutputSerializer(topic)
             return Response(serializer.data, s.HTTP_200_OK)
-        return Response({"msg": "No topic with this id"})
+        return Response({"msg": "No topic with this id"}, s.HTTP_400_BAD_REQUEST)
 
     def create(self, request, course_pk=None):
         user = request.user
         body = request.user
-        serializer = self.InputSerializer(data=body)
-        if not serializer.is_valid():
-            return Response(serializer.errors, s.HTTP_400_BAD_REQUEST)
+        course = Course.objects.filter(pk=course_pk).first()
+        if course is None:
+            return Response({"msg": "No topic with this id"}, s.HTTP_400_BAD_REQUEST)
+        if course.owner == user or user.isAdmin():
+            serializer = self.InputSerializer(data=body)
+            if not serializer.is_valid():
+                return Response(serializer.errors, s.HTTP_400_BAD_REQUEST)
+            print(serializer.data)
+            topic = Topic(course=course, **serializer.data)
+            topic.save()
         return Response(s.HTTP_201_CREATED)
 
     def update(self, request, course_pk=None, pk=None):
-        pass
+        user = request.user
+        topic = Topic.objects.filter(pk=pk, course_id=course_pk).first()
+        if not topic:
+            return Response({'msg': 'No topic with this id'}, s.HTTP_400_BAD_REQUEST)
+        body = request.data
+        if topic.course.owner == user or user.isAdmin():
+            topic.title = body.get('title', topic.title)
+            topic.text = body.get('text', topic.text)
+            topic.index = body.get('index', topic.index)
+            topic.save()
+        else:
+            return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
+        return Response({"msg": "Updated"}, s.HTTP_200_OK)
 
     def destroy(self, request, course_pk=None, pk=None):
-        pass
+        user = request.user
+        topic = Topic.objects.filter(pk=pk, course_id=course_pk).first()
+        if not topic:
+            return Response({'msg': 'No topic with this id'}, s.HTTP_400_BAD_REQUEST)
+        if topic.course.owner == user or user.isAdmin():
+            topic.delete()
+        else:
+            return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
+        return Response({"msg": "updated"}, s.HTTP_200_OK)
+

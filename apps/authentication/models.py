@@ -14,12 +14,12 @@ class User(AbstractUser):
     from_google = models.BooleanField(default=False)
     access_token = models.CharField(max_length=255, blank=True, null=True)
     ADMIN = 3
-    MENTOR = 2
+    STAFF = 2
     STUDENT = 1
 
     ROLE_CHOICES = (
         (ADMIN, 'Admin'),
-        (MENTOR, 'Mentor'),
+        (STAFF, 'Staff'),
         (STUDENT, 'Student'),
     )
     role = models.PositiveSmallIntegerField(choices=ROLE_CHOICES, default=1, blank=True, null=True)
@@ -34,11 +34,11 @@ class User(AbstractUser):
     def __str__(self):
         return f"User:{self.email}"
 
-    def is_student(self):
+    def isStudent(self):
         return self.role == 1
 
-    def is_mentor(self):
+    def isStaff(self):
         return self.role == 2
 
-    def is_admin(self):
-        return self.is_superuser or self.role == 3
+    def isAdmin(self):
+        return self.role == 3
