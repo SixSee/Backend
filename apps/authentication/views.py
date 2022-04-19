@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from Excelegal.helpers import respond
 from .models import User
 from .serializers import UserSerializer
 from .utils import GoogleOAuthApi, GoogleConnectError, create_user
@@ -39,9 +40,13 @@ class AdminLogin(APIView):
 
 class UserSignup(APIView):
     def post(self, request, format=None):
+        body = request.data
+        email_already = User.objects.filter(email=body.get('email')).first()
+        if email_already:
+            return respond(400, "Email already registered")
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            serializer.save()
             return Response(serializer.data, status=s.HTTP_201_CREATED)
         return Response(serializer.errors, status=s.HTTP_400_BAD_REQUEST)
 
@@ -50,23 +55,24 @@ class UserLogin(APIView):
     def post(self, request, format=None):
         body = request.data
         if ("email" not in body) or ("password" not in body):
-            return Response({"message": "email and password required"})
+            return respond(200, "Email and Password required")
 
         email = body.get('email')
         password = body.get('password')
         user = User.objects.filter(email=email).first()
         if not user:
-            return Response({"message": "No user with provided email"})
+            return respond(200, "No user with provided email")
         else:
             if user.check_password(password):
                 refresh = RefreshToken.for_user(user)
                 user.last_login = datetime.now()
                 user.save()
-                return Response({'refresh': str(refresh), 'access': str(refresh.access_token)})
+                return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
             else:
-                return Response({"message": "Email or Password incorrect"})
+                return respond(200, "Email or Password incorrect")
 
 
+# todo change soon
 class GoogleLogin(APIView):
     class InputSerializer(serializers.Serializer):
         code = serializers.CharField(required=False)
@@ -115,10 +121,29 @@ class UserInfoView(APIView):
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
             model = User
-            fields = ('id', 'email', 'password', 'first_name', 'last_name', 'role',
+            fields = ('id', 'email', 'first_name', 'last_name', 'role',
                       'device_id', 'is_email_verified')
+            extra_kwargs = {
+                'id': {'read_only': True},
+                'role': {'read_only': True},
+                'is_email_verified': {'read_only': True},
+                'device_id': {'read_only': True}
+            }
+
+    class InputSerializer(serializers.Serializer):
+        first_name = serializers.CharField(required=False)
+        last_name = serializers.CharField(required=False)
 
     def get(self, request):
         user = request.user
-        serializer = self.OutputSerializer(data=user)
-        return Response(serializer.data)
+        serializer = self.OutputSerializer(user)
+        return respond(200, "Success", serializer.data)
+
+    def put(self, request):
+        user = request.user
+        serializer = self.InputSerializer(data=request.data)
+        if serializer.is_valid():
+            user.__dict__.update(serializer.data)
+            user.save()
+            return respond(200, "Success")
+        return respond(400, "Success", serializer.errors)

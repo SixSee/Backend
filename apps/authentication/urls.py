@@ -13,7 +13,7 @@ urlpatterns = [
     # Login for main site or app
     path('token/', UserLogin.as_view(), name='TOKEN_OBTAIN'),
     # Login of admin site only
-    path('token/admin', AdminLogin.as_view(), name='ADMIN_LOGIN'),
+    path('admin/token/', AdminLogin.as_view(), name='ADMIN_LOGIN'),
     # JWT Token refresh
     path('token/refresh/', TokenRefreshView.as_view(), name='TOKEN_REFRESH'),
     # Google Login Callback
