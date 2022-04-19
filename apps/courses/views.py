@@ -7,6 +7,7 @@ from rest_framework.viewsets import ViewSet
 from Excelegal.helpers import respond
 from apps.authentication.models import User
 from .models import Course, Topic
+from .serializers import TopicSerializer
 
 
 class CourseViewSet(ViewSet):
@@ -14,6 +15,7 @@ class CourseViewSet(ViewSet):
     lookup_field = 'slug'
 
     class OutputSerializer(serializers.ModelSerializer):
+        topics = TopicSerializer(many=True)
         class Meta:
             model = Course
             exclude = ['created_at', 'updated_at', 'owner', 'is_archived']
