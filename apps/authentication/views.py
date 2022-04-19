@@ -3,7 +3,6 @@ from urllib.parse import urlencode
 
 from django.shortcuts import redirect
 from rest_framework import serializers
-from rest_framework import status as s
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,30 +14,29 @@ from .serializers import UserSerializer
 from .utils import GoogleOAuthApi, GoogleConnectError, create_user
 
 
-class AdminLogin(APIView):
+class AdminLoginView(APIView):
     def post(self, request, format=None):
         body = request.data
         if ("email" not in body) or ("password" not in body):
-            return Response({"message": "email and password required"})
+            return respond(200, "Email and Password required")
         email = body.get('email')
         password = body.get('password')
+        user = User.objects.filter(email=email).first()
         if not user:
-            return Response({"message": "No user with provided email"})
+            return respond(200, "No user with provided email")
         else:
             if user.role < user.STAFF:
-                return Response({"msg": "You dont have permission to login"}, s.HTTP_400_BAD_REQUEST)
-
+                return respond(200, "You dont have permission to login")
             if user.check_password(password):
                 refresh = RefreshToken.for_user(user)
-                user.last_login = datetime.now()
+                user.last_login = datetime.utcnow()
                 user.save()
-                return Response({'refresh': str(refresh), 'access': str(refresh.access_token)})
-
+                return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
             else:
-                return Response({"message": "Email or Password incorrect"})
+                return respond(200, "Email or Password incorrect")
 
 
-class UserSignup(APIView):
+class UserSignupView(APIView):
     def post(self, request, format=None):
         body = request.data
         email_already = User.objects.filter(email=body.get('email')).first()
@@ -47,11 +45,26 @@ class UserSignup(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=s.HTTP_201_CREATED)
-        return Response(serializer.errors, status=s.HTTP_400_BAD_REQUEST)
+            return respond(200, "Success")
+        return respond(400, "Error", serializer.errors)
 
 
-class UserLogin(APIView):
+class AdminSignupView(APIView):
+    def post(self, request, format=None):
+        body = request.data
+        email_already = User.objects.filter(email=body.get('email')).first()
+        if email_already:
+            return respond(400, "Email already registered")
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.role = User.STAFF
+            user.save()
+            return respond(200, "Success")
+        return respond(400, "Error", serializer.errors)
+
+
+class UserLoginView(APIView):
     def post(self, request, format=None):
         body = request.data
         if ("email" not in body) or ("password" not in body):
@@ -65,7 +78,7 @@ class UserLogin(APIView):
         else:
             if user.check_password(password):
                 refresh = RefreshToken.for_user(user)
-                user.last_login = datetime.now()
+                user.last_login = datetime.utcnow()
                 user.save()
                 return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
             else:
@@ -73,7 +86,7 @@ class UserLogin(APIView):
 
 
 # todo change soon
-class GoogleLogin(APIView):
+class GoogleLoginView(APIView):
     class InputSerializer(serializers.Serializer):
         code = serializers.CharField(required=False)
         error = serializers.CharField(required=False)
@@ -112,6 +125,7 @@ class GoogleLogin(APIView):
 
         refresh = RefreshToken.for_user(user)
         params = urlencode({'access': refresh.access_token, 'refresh': str(refresh)})
+        # return respond(200, "Success", {'access': refresh.access_token, 'refresh': str(refresh)})
         return redirect(f"{login_url}?{params}")
 
 
@@ -143,7 +157,7 @@ class UserInfoView(APIView):
         user = request.user
         serializer = self.InputSerializer(data=request.data)
         if serializer.is_valid():
-            user.__dict__.update(serializer.data)
+            user.__dict__.update(serializer.validated_data)
             user.save()
             return respond(200, "Success")
         return respond(400, "Success", serializer.errors)
