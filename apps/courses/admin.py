@@ -11,7 +11,6 @@ class CourseAdmin(admin.ModelAdmin):
         'slug',
         'description',
         'owner',
-        'views',
         'is_archived',
         'created_at',
         'updated_at',
@@ -30,7 +29,6 @@ class TopicAdmin(admin.ModelAdmin):
         'slug',
         'index',
         'text',
-        'views',
         'created_at',
         'updated_at',
     )

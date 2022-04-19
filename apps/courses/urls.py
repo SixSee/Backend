@@ -2,10 +2,10 @@ from django.http import HttpResponse
 from django.urls import path,include
 from rest_framework_nested import routers
 
-from .views import CreateCourseViewSet, CreateCourseTopicViewSet
+from .views import CourseViewSet, CreateCourseTopicViewSet
 
 router = routers.SimpleRouter()
-router.register(r'course', CreateCourseViewSet, basename='course')
+router.register(r'course', CourseViewSet, basename='course')
 topic_router = routers.NestedSimpleRouter(router, r'course', lookup='course')
 topic_router.register(r'topic', CreateCourseTopicViewSet, basename='course-topic')
 

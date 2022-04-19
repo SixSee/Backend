@@ -1,21 +1,22 @@
-from datetime import datetime
-
+from django.utils import timezone
 from rest_framework import status as s, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
+from Excelegal.helpers import respond
 from apps.authentication.models import User
 from .models import Course, Topic
 
 
-class CreateCourseViewSet(ViewSet):
+class CourseViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'
 
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
             model = Course
-            exclude = ['created_at', 'updated_at', 'owner', 'views', 'is_archived']
+            exclude = ['created_at', 'updated_at', 'owner', 'is_archived']
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True)
@@ -23,17 +24,16 @@ class CreateCourseViewSet(ViewSet):
 
     def list(self, request):
         user = request.user
-
         if user.isAdmin():
             courses = Course.objects.all()
         elif user.isStaff():
-            courses = Course.objects.filter(owner=user, is_archived=False)
+            courses = Course.objects.filter(owner=user)
         else:
-            return Response({"msg": "invalid perms"}, s.HTTP_400_BAD_REQUEST)
+            courses = Course.objects.filter(is_archived=False)
         serializer = self.OutputSerializer(courses, many=True)
-        return Response(serializer.data)
+        return respond(200, "Success", serializer.data)
 
-    def retrieve(self, request, pk=None):
+    def retrieve(self, request, slug=None):
         user = request.user
         course = Course.objects.filter(pk=pk).first()
         serializer = self.OutputSerializer(course)
@@ -72,7 +72,7 @@ class CreateCourseViewSet(ViewSet):
         if course.owner == user or user.isAdmin():
             course.title = body.get('title', course.title)
             course.description = body.get('description', course.description)
-            course.updated_at = datetime.now()
+            course.updated_at = timezone.now()
             course.save()
         else:
             return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
@@ -158,4 +158,3 @@ class CreateCourseTopicViewSet(ViewSet):
         else:
             return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
         return Response({"msg": "updated"}, s.HTTP_200_OK)
-
