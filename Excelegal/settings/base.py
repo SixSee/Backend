@@ -164,5 +164,8 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
+# CORS setup
+CORS_ORIGIN_ALLOW_ALL = True
+
 CLIENT_ID = env.GOOGLE_CLIENT_ID
 CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET
