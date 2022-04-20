@@ -2,12 +2,14 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
+import apps.courses.models
 from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
-from .models import Course, Topic
-from .serializers import TopicSerializer
+from .models import Course, Topic, CourseReview
+from .serializers import TopicSerializer, CourseReviewSerializer
 
 
 class CourseViewSet(ViewSet):
@@ -16,10 +18,11 @@ class CourseViewSet(ViewSet):
 
     class OutputSerializer(serializers.ModelSerializer):
         topics = TopicSerializer(many=True)
+        reviews = CourseReviewSerializer(many=True)
 
         class Meta:
             model = Course
-            exclude = ['created_at', 'updated_at', 'owner', 'is_archived']
+            fields = ['id', 'title', 'slug', 'description', 'topics', 'reviews']
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True, allow_null=False, allow_blank=False)
@@ -180,3 +183,62 @@ class CourseTopicViewSet(ViewSet):
             return respond(200, "Success")
         else:
             return respond(400, "You dont have permission")
+
+
+class CourseReviewView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = CourseReview
+            fields = ['id', 'review_by', 'text', 'rating', 'created_at', 'updated_at']
+
+    class InputSerializer(serializers.Serializer):
+        text = serializers.CharField(required=False, allow_blank=True)
+        rating = serializers.IntegerField(required=True, min_value=0, max_value=5)
+
+    def get(self, request, course_slug=None, format=None):
+        course = dao_handler.course_dao.get_by_slug(course_slug)
+        if not course:
+            return respond(200, "No course with this slug")
+        reviews = course.coursereview_set.all()
+        serializer = self.OutputSerializer(reviews, many=True)
+        return respond(200, "Success", serializer.data)
+
+    def post(self, request, course_slug=None):
+        body = request.data
+        user = request.user
+        course = dao_handler.course_dao.get_by_slug(course_slug)
+
+        if not course:
+            return respond(200, "No course with this slug")
+        serializer = self.InputSerializer(data=body)
+        if not serializer.is_valid():
+            return respond(400, "Fail", serializer.errors)
+
+        serializer.validated_data['review_by'] = user if not user.is_anonymous else None
+        serializer.validated_data['course'] = course
+        dao_handler.course_review_dao.create_review(**serializer.validated_data)
+        return respond(200, "Success")
+
+    def put(self, request, course_slug=None):
+        body = request.data
+        user = request.user
+
+        course = dao_handler.course_dao.get_by_slug(course_slug)
+        if not course:
+            return respond(200, "No course with this slug")
+        pk = request.GET.get('id', None)
+        review: apps.courses.models.CourseReview = dao_handler.course_review_dao.get_by_id(id=pk)
+        if not review:
+            return respond(400, "No review found with this id")
+        serializer = self.InputSerializer(data=body)
+        if not serializer.is_valid():
+            return respond(400, "Fail", serializer.errors)
+        if user.id != review.review_by.id:
+            return respond(400, "This review doesn't belong to you")
+
+        review.text = serializer.validated_data.get('text')
+        review.rating = serializer.validated_data.get('rating')
+        review.save()
+        return respond(200, "Success")

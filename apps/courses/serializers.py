@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Topic
+from .models import Topic, CourseReview
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -10,3 +10,9 @@ class TopicSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'id': {'read_only': True},
         }
+
+
+class CourseReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseReview
+        fields = ['id', 'review_by', 'text', 'rating', 'created_at', 'updated_at']
