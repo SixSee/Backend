@@ -103,13 +103,13 @@ class CourseTopicViewSet(ViewSet):
 
     def list(self, request, course_slug=None):
         user = request.user
-        topics = Topic.objects.filter(course__slug=course_slug).order_by('index')
+        topics = Topic.objects.filter(course__slug=course_slug, course__is_archived=False).order_by('index')
         serializer = self.OutputSerializer(topics, many=True)
         return respond(200, "Success", serializer.data)
 
     def retrieve(self, request, topic_slug=None, course_slug=None):
         user = request.user
-        topic = Topic.objects.filter(slug=topic_slug, course__slug=course_slug).first()
+        topic = Topic.objects.filter(slug=topic_slug, course__slug=course_slug, course__is_archived=False).first()
         if not topic:
             return respond(400, "No topic with this id")
         serializer = self.OutputSerializer(topic)
