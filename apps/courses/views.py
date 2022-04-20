@@ -1,43 +1,44 @@
 from django.utils import timezone
-from rest_framework import status as s, serializers
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import serializers
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
+from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
-from apps.authentication.models import User
 from .models import Course, Topic
 from .serializers import TopicSerializer
 
 
 class CourseViewSet(ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     lookup_field = 'slug'
 
     class OutputSerializer(serializers.ModelSerializer):
         topics = TopicSerializer(many=True)
+
         class Meta:
             model = Course
             exclude = ['created_at', 'updated_at', 'owner', 'is_archived']
 
     class InputSerializer(serializers.Serializer):
-        title = serializers.CharField(max_length=255, required=True)
-        description = serializers.CharField(required=True)
+        title = serializers.CharField(max_length=255, required=True, allow_null=False, allow_blank=False)
+        description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     def list(self, request):
         user = request.user
-        if user.isAdmin():
+        # todo-> seperate apis for getting courses for main site or admin panel?
+        if not user.is_anonymous and user.isAdmin:
             courses = Course.objects.all()
-        elif user.isStaff():
-            courses = Course.objects.filter(owner=user)
         else:
             courses = Course.objects.filter(is_archived=False)
         serializer = self.OutputSerializer(courses, many=True)
         return respond(200, "Success", serializer.data)
 
+    # todo _> Continue from here
     def retrieve(self, request, slug=None):
         user = request.user
-        course = Course.objects.filter(pk=pk).first()
+        course = Course.objects.filter(slug=slug).first()
         serializer = self.OutputSerializer(course)
         return Response(serializer.data)
 
@@ -46,55 +47,49 @@ class CourseViewSet(ViewSet):
         body = request.data
         serializer = self.InputSerializer(data=body)
         if not serializer.is_valid():
-            return Response(serializer.errors, s.HTTP_400_BAD_REQUEST)
+            return respond(200, "Fail", serializer.errors)
+        if user.isStudent():
+            return respond(200, "You dont have permission to create courses")
+        course = dao_handler.course_dao.create_course(**serializer.validated_data, owner=user)
+        return respond(200, "Success")
 
-        if "owner" in body.keys() and user.isAdmin():
-            course_owner_uuid = body.get('owner')
-            course_owner = User.objects.filter(pk=course_owner_uuid).first()
-            if course_owner is None:
-                return Response({"msg": "no user with this id"}, status=s.HTTP_400_BAD_REQUEST)
-
-            course = Course(owner=course_owner, **serializer.data)
-
-        elif user.isStaff():
-            course = Course(owner=user, **serializer.data)
-        else:
-            return Response({"msg": "invalid perms"}, s.HTTP_400_BAD_REQUEST)
-
-        course.save()
-        return Response(serializer.data, s.HTTP_201_CREATED)
-
-    def update(self, request, pk=None):
+    def update(self, request, slug=None):
         user = request.user
-        course = Course.objects.filter(pk=pk).first()
-        if not course:
-            return Response({'msg': 'No course with this id'}, s.HTTP_400_BAD_REQUEST)
-
         body = request.data
+        course = Course.objects.filter(slug=slug).first()
+
+        if not course:
+            return respond(400, "No course with this slug")
+
         if course.owner == user or user.isAdmin():
-            course.title = body.get('title', course.title)
-            course.description = body.get('description', course.description)
+            serializer = self.InputSerializer(data=body)
+            if not serializer.is_valid():
+                return respond(200, "Fail", serializer.errors)
+            course.title = serializer.validated_data.get('title', course.title)
+            course.description = serializer.validated_data.get('description', course.description)
             course.updated_at = timezone.now()
             course.save()
+            return respond(200, "Success")
         else:
-            return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
-        return Response({"msg": "Updated"}, s.HTTP_200_OK)
+            return respond(400, "You dont have permission")
 
-    def destroy(self, request, pk=None):
-        course = Course.objects.filter(pk=pk).first()
+    def destroy(self, request, slug=None):
+        course = Course.objects.filter(slug=slug).first()
         user = request.user
+
         if not course:
-            return Response({'msg': 'No course with this id'}, s.HTTP_400_BAD_REQUEST)
+            return respond(400, "No course with this slug")
 
         if course.owner == user or user.isAdmin():
             course.delete()
+            return respond(200, "Success")
         else:
-            return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
-        return Response({"msg": "updated"}, s.HTTP_200_OK)
+            return respond(400, "You dont have permission")
 
 
-class CreateCourseTopicViewSet(ViewSet):
-    permission_classes = [IsAuthenticated]
+class CourseTopicViewSet(ViewSet):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    lookup_field = 'topic_slug'
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True)
@@ -104,59 +99,84 @@ class CreateCourseTopicViewSet(ViewSet):
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
             model = Topic
-            exclude = ['slug', 'id', 'course']
+            exclude = ['course']
 
-    def list(self, request, course_pk=None):
+    def list(self, request, course_slug=None):
         user = request.user
-        topics = Topic.objects.filter(course=course_pk).order_by('index')
+        topics = Topic.objects.filter(course__slug=course_slug).order_by('index')
         serializer = self.OutputSerializer(topics, many=True)
-        return Response(serializer.data, s.HTTP_200_OK)
+        return respond(200, "Success", serializer.data)
 
-    def retrieve(self, request, pk=None, course_pk=None):
+    def retrieve(self, request, topic_slug=None, course_slug=None):
         user = request.user
-        topic = Topic.objects.filter(pk=pk, course=course_pk).first()
-        if topic:
-            serializer = self.OutputSerializer(topic)
-            return Response(serializer.data, s.HTTP_200_OK)
-        return Response({"msg": "No topic with this id"}, s.HTTP_400_BAD_REQUEST)
-
-    def create(self, request, course_pk=None):
-        user = request.user
-        body = request.user
-        course = Course.objects.filter(pk=course_pk).first()
-        if course is None:
-            return Response({"msg": "No topic with this id"}, s.HTTP_400_BAD_REQUEST)
-        if course.owner == user or user.isAdmin():
-            serializer = self.InputSerializer(data=body)
-            if not serializer.is_valid():
-                return Response(serializer.errors, s.HTTP_400_BAD_REQUEST)
-            print(serializer.data)
-            topic = Topic(course=course, **serializer.data)
-            topic.save()
-        return Response(s.HTTP_201_CREATED)
-
-    def update(self, request, course_pk=None, pk=None):
-        user = request.user
-        topic = Topic.objects.filter(pk=pk, course_id=course_pk).first()
+        topic = Topic.objects.filter(slug=topic_slug, course__slug=course_slug).first()
         if not topic:
-            return Response({'msg': 'No topic with this id'}, s.HTTP_400_BAD_REQUEST)
+            return respond(400, "No topic with this id")
+        serializer = self.OutputSerializer(topic)
+        return respond(200, "Success", serializer.data)
+
+    def create(self, request, course_slug=None):
+        user = request.user
         body = request.data
-        if topic.course.owner == user or user.isAdmin():
-            topic.title = body.get('title', topic.title)
-            topic.text = body.get('text', topic.text)
-            topic.index = body.get('index', topic.index)
-            topic.save()
-        else:
-            return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
-        return Response({"msg": "Updated"}, s.HTTP_200_OK)
+        course = Course.objects.filter(slug=course_slug).first()
 
-    def destroy(self, request, course_pk=None, pk=None):
+        if not course:
+            return respond(200, "No topic with this slug")
+
+        serializer = self.InputSerializer(data=body)
+        if not serializer.is_valid():
+            return respond(200, "Failure", serializer.errors)
+
+        if course.owner == user or user.isAdmin():
+            # Check if index does not exists previously
+            index = serializer.validated_data.get('index')
+            topic_index_exists = (Topic.objects.
+                                  filter(course__slug=course_slug, index=index)
+                                  .exists())
+            if topic_index_exists:
+                # shift down other topics
+                dao_handler.topic_dao.shift_topics_down(index, course)
+
+            topic = dao_handler.topic_dao.create_topic(course=course, **serializer.validated_data)
+            return respond(200, "Success")
+        else:
+            return respond(400, "You dont have permission")
+
+    def update(self, request, course_slug=None, topic_slug=None):
         user = request.user
-        topic = Topic.objects.filter(pk=pk, course_id=course_pk).first()
+        body = request.data
+        topic = Topic.objects.filter(slug=topic_slug, course__slug=course_slug).first()
         if not topic:
-            return Response({'msg': 'No topic with this id'}, s.HTTP_400_BAD_REQUEST)
+            return respond(200, "No topic with this slug")
+
+        serializer = self.InputSerializer(data=body)
+        if not serializer.is_valid():
+            return respond(200, "Failure", serializer.errors)
+
+        if topic.course.owner is user or user.isAdmin():
+            # Check if index does not exists previously
+            index = serializer.validated_data.get('index')
+            topic_index_exists = (Topic.objects.
+                                  filter(course__slug=course_slug, index=index)
+                                  .exists())
+            if topic_index_exists:
+                # shift down other topics
+                dao_handler.topic_dao.shift_topics_down(index, course)
+            topic.title = serializer.validated_data.get('title', topic.title)
+            topic.text = serializer.validated_data.get('text', topic.text)
+            topic.index = serializer.validated_data.get('index', topic.index)
+            topic.save()
+            return respond(200, "Success")
+        else:
+            return respond(400, "You dont have permission")
+
+    def destroy(self, request, course_slug=None, topic_slug=None):
+        user = request.user
+        topic = Topic.objects.filter(slug=topic_slug, course__slug=course_slug).first()
+        if not topic:
+            return respond(200, "No topic with this slug")
         if topic.course.owner == user or user.isAdmin():
             topic.delete()
+            return respond(200, "Success")
         else:
-            return Response({"msg": "Invalid perms"}, s.HTTP_400_BAD_REQUEST)
-        return Response({"msg": "updated"}, s.HTTP_200_OK)
+            return respond(400, "You dont have permission")
