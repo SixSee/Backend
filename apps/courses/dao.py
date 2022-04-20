@@ -1,5 +1,5 @@
 from Excelegal.helpers import GenericDao
-from .models import Course, Topic
+from .models import Course, Topic, CourseReview
 
 
 class CourseDao(GenericDao):
@@ -9,6 +9,9 @@ class CourseDao(GenericDao):
         course = self.model(title=title, description=description, owner=owner)
         course.save()
         return course
+
+    def get_by_slug(self, slug):
+        return self.model.objects.filter(slug=slug).first()
 
 
 class TopicDao(GenericDao):
@@ -25,3 +28,12 @@ class TopicDao(GenericDao):
             topic.index = index + 1
             index += 1
             topic.save()
+
+
+class CourseReviewDao(GenericDao):
+    model = CourseReview
+
+    def create_review(self, course, review_by, text, rating):
+        review = self.model(course=course, review_by=review_by, text=text, rating=rating)
+        review.save()
+        return review
