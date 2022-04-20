@@ -12,12 +12,11 @@ def unique_slug_generator(instance, keyword, new_slug=None):
 
     def random_string_generator(size=5, chars=string.ascii_lowercase + string.digits):
         return ''.join(random.choice(chars) for _ in range(size))
-
-    if not new_slug :
+    if new_slug:
         slug = new_slug
     else:
         slug = slugify(keyword)
     slug_exists = instance.objects.filter(slug=slug).exists()
     if slug_exists:
-        slug = f"{slug}-{random_string_generator(size=3)}"
+        slug = f"{slug}-{random_string_generator(size=2)}"
     return slug
