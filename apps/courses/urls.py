@@ -12,5 +12,4 @@ urlpatterns = [
     path(r'', include(router.urls)),
     path(r'', include(topic_router.urls)),
     path('course/review/<course_slug>', CourseReviewView.as_view()),
-
 ]

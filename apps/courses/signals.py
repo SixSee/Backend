@@ -1,7 +1,7 @@
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from .helpers import unique_slug_generator
+from Excelegal.helpers import unique_slug_generator
 from .models import Course, Topic
 
 

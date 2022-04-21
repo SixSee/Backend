@@ -1,7 +1,6 @@
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
@@ -43,7 +42,7 @@ class CourseViewSet(ViewSet):
         user = request.user
         course = Course.objects.filter(slug=slug).first()
         serializer = self.OutputSerializer(course)
-        return Response(serializer.data)
+        return respond(200, "Success", serializer.data)
 
     def create(self, request):
         user = request.user
