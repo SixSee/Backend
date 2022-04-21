@@ -13,7 +13,7 @@ SECRET_KEY = env.SECRET
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.DEBUG
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -31,7 +31,8 @@ INSTALLED_APPS = [
     "django_extensions",
     # Apps
     "apps.authentication.apps.AuthenticationConfig",
-    "apps.courses.apps.CoursesConfig"
+    "apps.courses.apps.CoursesConfig",
+    'drf_yasg'
 ]
 
 AUTH_USER_MODEL = "authentication.User"
@@ -166,6 +167,21 @@ AUTHENTICATION_BACKENDS = [
 
 # CORS setup
 CORS_ORIGIN_ALLOW_ALL = True
-
+CSRF_TRUSTED_ORIGINS = ['https://*.excelegal.wantguns.dev', 'http://*.127.0.0.1']
 CLIENT_ID = env.GOOGLE_CLIENT_ID
 CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
+}
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+    'localhost',
+]
