@@ -25,14 +25,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Django modules
-    "corsheaders",
-    "rest_framework",
-    "rest_framework_simplejwt",
-    "django_extensions",
+    'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'django_extensions',
+    'drf_yasg',
     # Apps
-    "apps.authentication.apps.AuthenticationConfig",
-    "apps.courses.apps.CoursesConfig",
-    'drf_yasg'
+    'apps.authentication.apps.AuthenticationConfig',
+    'apps.courses.apps.CoursesConfig',
+    'apps.blogs.apps.BlogsConfig',
 ]
 
 AUTH_USER_MODEL = "authentication.User"
