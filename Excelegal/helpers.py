@@ -14,7 +14,7 @@ def respond(status, message="", payload=False):
     return Response(response_json, status=status)
 
 
-class GenericDao():
+class GenericDao:
     model = None
 
     def get_by_id(self, id):
