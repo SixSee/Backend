@@ -37,7 +37,6 @@ class CourseViewSet(ViewSet):
         serializer = self.OutputSerializer(courses, many=True)
         return respond(200, "Success", serializer.data)
 
-    # todo _> Continue from here
     def retrieve(self, request, slug=None):
         user = request.user
         course = Course.objects.filter(slug=slug).first()
