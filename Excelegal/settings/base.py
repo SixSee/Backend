@@ -41,6 +41,7 @@ AUTH_USER_MODEL = "authentication.User"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -180,8 +181,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # CORS setup
-CORS_ORIGIN_ALLOW_ALL = True
-CSRF_TRUSTED_ORIGINS = ['https://*', 'http://*']
+CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = ['https://api.excelegal.wantguns.dev', 'http://0.0.0.0:8000']
 CLIENT_ID = env.GOOGLE_CLIENT_ID
 CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET
 
