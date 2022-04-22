@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 
-from .models import Blog
+from .models import Blog, BlogReview
 
 
 @admin.register(Blog)
@@ -11,6 +11,7 @@ class BlogAdmin(admin.ModelAdmin):
         'title',
         'slug',
         'text',
+        'image',
         'owner',
         'type',
         'is_live',
@@ -26,4 +27,19 @@ class BlogAdmin(admin.ModelAdmin):
         'updated_at',
     )
     search_fields = ('slug',)
+    date_hierarchy = 'created_at'
+
+
+@admin.register(BlogReview)
+class BlogReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'blog',
+        'review_by',
+        'text',
+        'rating',
+        'created_at',
+        'updated_at',
+    )
+    list_filter = ('blog', 'review_by', 'created_at', 'updated_at')
     date_hierarchy = 'created_at'

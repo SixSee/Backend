@@ -1,6 +1,7 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
+from Excelegal.helpers import UploadTo, validate_image
 from apps.authentication.models import User
 
 
@@ -9,12 +10,16 @@ class Course(models.Model):
     slug = models.CharField(max_length=319, blank=True, null=True)
     description = models.TextField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    image = models.ImageField(upload_to=UploadTo('course_images'), validators=[validate_image], blank=True, null=True)
     is_archived = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.id}->{self.title}"
+
+    def get_image_url(self):
+        return self.image.url
 
 
 class Topic(models.Model):

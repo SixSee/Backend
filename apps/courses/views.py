@@ -21,11 +21,12 @@ class CourseViewSet(ViewSet):
 
         class Meta:
             model = Course
-            fields = ['id', 'title', 'slug', 'description', 'topics', 'reviews']
+            fields = ['id', 'title', 'image', 'slug', 'description', 'topics', 'reviews']
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True, allow_null=False, allow_blank=False)
         description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+        image = serializers.ImageField(required=False, allow_null=False, allow_empty_file=False)
 
     def list(self, request):
         user = request.user
@@ -66,10 +67,8 @@ class CourseViewSet(ViewSet):
             serializer = self.InputSerializer(data=body)
             if not serializer.is_valid():
                 return respond(200, "Fail", serializer.errors)
-            course.title = serializer.validated_data.get('title', course.title)
-            course.description = serializer.validated_data.get('description', course.description)
-            course.updated_at = timezone.now()
-            course.save()
+            serializer.validated_data['id'] = course.id
+            dao_handler.course_dao.save_from_dict(serializer.validated_data)
             return respond(200, "Success")
         else:
             return respond(400, "You dont have permission")
@@ -131,8 +130,8 @@ class CourseTopicViewSet(ViewSet):
         if course.owner == user or user.isAdmin():
             # Check if index does not exists previously
             index = serializer.validated_data.get('index')
-            topic_index_exists = (Topic.objects.
-                                  filter(course__slug=course_slug, index=index)
+            topic_index_exists = (Topic.objects
+                                  .filter(course__slug=course_slug, index=index)
                                   .exists())
             if topic_index_exists:
                 # shift down other topics

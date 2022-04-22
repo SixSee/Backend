@@ -7,17 +7,13 @@ WORKDIR /backend
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH=.
 RUN apk update && apk upgrade
-RUN apk add --no-cache gcc \
- openssl-dev \
- musl-dev \
- mariadb-dev \
- && rm -rf /var/cache/apk/*
-RUN apk add make cmake
+RUN apk --update add postgresql-client
+RUN apk add postgresql-dev gcc python3-dev musl-dev
 
 # install dependencies
 RUN python -m pip install --upgrade pip
 COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --no-cache-dir
 
 # Copy project
 COPY ./ .
