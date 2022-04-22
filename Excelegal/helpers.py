@@ -32,8 +32,6 @@ def unique_slug_generator(instance, keyword, new_slug=None):
         slug = slugify(keyword)
     if instance.objects.filter(slug=slug).exists():
         slug = f"{slug}-{random_string_generator(size=2)}"
-    import pdb
-    pdb.set_trace()
     return slug
 
 

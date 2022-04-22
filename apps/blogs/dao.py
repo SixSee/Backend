@@ -1,5 +1,5 @@
 from Excelegal.helpers import GenericDao
-from .models import Blog
+from .models import Blog, BlogReview
 
 
 class BlogsDao(GenericDao):
@@ -12,3 +12,12 @@ class BlogsDao(GenericDao):
 
     def get_by_slug(self, slug):
         return self.model.objects.filter(slug=slug).first()
+
+
+class BlogReviewDao(GenericDao):
+    model = BlogReview
+
+    def create_review(self, course, review_by, text, rating):
+        review = self.model(course=course, review_by=review_by, text=text, rating=rating)
+        review.save()
+        return review

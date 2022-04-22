@@ -1,4 +1,4 @@
-from apps.blogs.dao import BlogsDao
+from apps.blogs.dao import BlogsDao, BlogReviewDao
 from apps.courses.dao import CourseDao, TopicDao, CourseReviewDao
 
 
@@ -7,6 +7,7 @@ class DaoCollection():
     topic_dao = TopicDao()
     course_review_dao = CourseReviewDao()
     blogs_dao = BlogsDao()
+    blogs_review_dao = BlogReviewDao()
 
     def get_by_ids(self, model, ids):
         return (
