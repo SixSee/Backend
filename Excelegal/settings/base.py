@@ -174,10 +174,13 @@ CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
-        'api_key': {
+        'Basic': {
+            'type': 'basic'
+        },
+        'Bearer': {
             'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization'
+            'name': 'Authorization',
+            'in': 'header'
         }
     },
 }

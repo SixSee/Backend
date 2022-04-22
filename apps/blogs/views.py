@@ -5,9 +5,9 @@ from rest_framework.viewsets import ViewSet
 
 from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
-from .models import Blog
-from .serializers import BlogsSerializer
 from apps.authentication.serializers import UserSerializer
+from .models import Blog, BlogReview
+from .serializers import BlogsSerializer
 
 
 class LatestBlogView(APIView):
@@ -15,8 +15,8 @@ class LatestBlogView(APIView):
         blog_type = request.GET.get('type', 'blog')
         blogs = (
             Blog.objects.filter(is_archived=False, is_live=True, type=blog_type)
-            .order_by('created_at', 'updated_at')
-            .all()
+                .order_by('created_at', 'updated_at')
+                .all()
         )
         serializer = BlogsSerializer(blogs, many=True)
         return respond(200, "Success", serializer.data)
@@ -101,3 +101,65 @@ class BlogsViewSet(ViewSet):
             return respond(200, "Success")
         else:
             return respond(400, "You dont have permission")
+
+
+class BlogReviewView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = BlogReview
+            fields = ['id', 'review_by', 'text', 'rating', 'created_at', 'updated_at']
+
+    class InputSerializer(serializers.Serializer):
+        text = serializers.CharField(required=False, allow_blank=True)
+        rating = serializers.IntegerField(required=True, min_value=0, max_value=5)
+
+    def get(self, request, blog_slug=None, format=None):
+        blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
+        if not blog:
+            return respond(200, "No blog with this slug")
+
+        reviews = blog.blogreview_set.all()
+        serializer = self.OutputSerializer(reviews, many=True)
+        return respond(200, "Success", serializer.data)
+
+    def post(self, request, blog_slug=None):
+        body = request.data
+        user = request.user
+        blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
+        if not blog:
+            return respond(200, "No blog with this slug")
+
+        serializer = self.InputSerializer(data=body)
+        if not serializer.is_valid():
+            return respond(400, "Fail", serializer.errors)
+
+        serializer.validated_data['review_by'] = user
+        serializer.validated_data['blog'] = blog
+        dao_handler.blogs_review_dao.create_review(**serializer.validated_data)
+        return respond(200, "Success")
+
+    def put(self, request, blog_slug=None):
+        body = request.data
+        user = request.user
+
+        blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
+        if not blog:
+            return respond(200, "No blog with this slug")
+
+        pk = request.GET.get('id', None)
+        review: apps.blogs.models.BlogReview = dao_handler.blogs_review_dao.get_by_id(id=pk)
+        if not review:
+            return respond(400, "No review found with this id")
+
+        serializer = self.InputSerializer(data=body)
+        if not serializer.is_valid():
+            return respond(400, "Fail", serializer.errors)
+        if user.id != review.review_by.id:
+            return respond(400, "This review doesn't belong to you")
+
+        review.text = serializer.validated_data.get('text')
+        review.rating = serializer.validated_data.get('rating')
+        review.save()
+        return respond(200, "Success")
