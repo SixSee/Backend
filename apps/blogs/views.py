@@ -37,6 +37,7 @@ class BlogsViewSet(ViewSet):
         title = serializers.CharField(required=True, allow_null=False)
         text = serializers.CharField(required=False, allow_null=True)
         type = serializers.ChoiceField(choices=Blog.BlogTypes, required=True, allow_blank=False, allow_null=False)
+        image = serializers.ImageField(required=False, allow_null=False, allow_empty_file=False)
 
     def list(self, request):
         user = request.user

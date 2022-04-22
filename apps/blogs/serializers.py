@@ -12,5 +12,5 @@ class BlogsSerializer(serializers.ModelSerializer):
 class BlogReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlogReview
-        fields = ['id', 'review_by', 'text', 'rating', 'created_at', 'updated_at']
+        fields = ['id', 'review_by', 'image', 'text', 'rating', 'created_at', 'updated_at']
 
