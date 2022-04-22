@@ -12,6 +12,7 @@ class CourseAdmin(admin.ModelAdmin):
         'slug',
         'description',
         'owner',
+        'image',
         'is_archived',
         'created_at',
         'updated_at',

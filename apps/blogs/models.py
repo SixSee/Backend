@@ -1,6 +1,8 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import MinValueValidator, MaxValueValidator
+
+from Excelegal.helpers import validate_image, UploadTo
 from apps.authentication.models import User
 
 
@@ -14,6 +16,7 @@ class Blog(models.Model):
     title = models.CharField(max_length=255)
     slug = models.CharField(max_length=319, blank=True, null=True)
     text = models.TextField()
+    image = models.ImageField(upload_to=UploadTo('blog_images'), validators=[validate_image], blank=True, null=True)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     type = models.CharField(max_length=15, choices=BlogTypes.choices, default=BlogTypes.Blog)
     is_live = models.BooleanField(default=False)
@@ -24,12 +27,14 @@ class Blog(models.Model):
     def get_type(self):
         return self.BlogTypes[self.type]
 
+    def get_image_url(self):
+        return self.image.url
+
     def __str__(self):
         return f"{self.title[:10]}->{self.type}->{self.owner.email}"
 
 
 class BlogReview(models.Model):
-
     blog = models.ForeignKey(Blog, related_name='reviews', on_delete=models.CASCADE)
     review_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     text = models.TextField(blank=True, null=True)
