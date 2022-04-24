@@ -83,7 +83,7 @@ class Email:
         return email.send()
 
 
-class MagicLink():
+class MagicLink:
     SECRET = config.SECRET_KEY
     USER: User = None
     ALGORITHM = ["HS256"]

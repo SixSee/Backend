@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .views import (UserInfoView, UserSignupView, AdminLoginView, AdminSignupView, UserLoginView, GoogleLoginView, MagicLinkVerifyView)
+from .views import (UserInfoView, UserSignupView, AdminLoginView, AdminSignupView, UserLoginView, GoogleLoginView, MagicLinkVerifyView, ForgotPasswordView)
 
 urlpatterns = [
     # Get user info
@@ -21,5 +21,7 @@ urlpatterns = [
     # Google Login Callback
     path('login/google/', GoogleLoginView.as_view(), name='GOOGLE_LOGIN'),
 
-    path('magic-link/', MagicLinkVerifyView.as_view())
+    path('magic-link/', MagicLinkVerifyView.as_view()),
+
+    path('forgot-password/', ForgotPasswordView.as_view())
 ]

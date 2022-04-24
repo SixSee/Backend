@@ -70,7 +70,14 @@ class CourseViewSet(ViewSet):
             if not serializer.is_valid():
                 return respond(200, "Fail", serializer.errors)
             serializer.validated_data['id'] = course.id
-            dao_handler.course_dao.save_from_dict(serializer.validated_data)
+            course.title = serializer.validated_data.get('title', course.title)
+            course.description = serializer.validated_data.get('description', course.description)
+            course.is_archived = serializer.validated_data.get('is_archived', course.is_archived)
+            if user.isAdmin():
+                course.is_live = serializer.validated_data.get('is_live', course.is_live)
+            course.save()
+            # course.objects.update(**serializer.validated_data)
+            # dao_handler.course_dao.save_from_dict(serializer.validated_data)
             return respond(200, "Success")
         else:
             return respond(400, "You dont have permission")

@@ -84,7 +84,6 @@ if env.CURRENT_ENV != 'local':
         }
     }
 else:
-
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -186,7 +185,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = ['https://api.excelegal.wantguns.dev', 'http://0.0.0.0:8000']
 CLIENT_ID = env.GOOGLE_CLIENT_ID
 CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET
-
+LOGIN_URL = "/admin/login/"
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Basic': {
@@ -204,7 +203,6 @@ INTERNAL_IPS = [
     '127.0.0.1',
     'localhost',
 ]
-
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
