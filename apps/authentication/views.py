@@ -220,8 +220,6 @@ class UserInfoView(APIView):
 class MagicLinkVerifyView(APIView):
     def post(self, request):
         token = request.data.get('token')
-        import pdb
-        pdb.set_trace()
         if not token:
             return respond(400, "field token required")
         magic_link = MagicLink()
