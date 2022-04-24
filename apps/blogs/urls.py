@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework_nested import routers
 
-from .views import LatestBlogView, BlogsViewSet, BlogReviewView
+from .views import (LatestBlogView, BlogsViewSet, BlogReviewView)
 
 router = routers.SimpleRouter()
 router.register(r'', BlogsViewSet, basename='blogs')

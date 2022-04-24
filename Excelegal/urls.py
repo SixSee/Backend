@@ -21,7 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('apps.authentication.urls')),
     path('', include('apps.courses.urls')),
-    path('blog/', include('apps.blogs.urls'))
+    path('blog/', include('apps.blogs.urls')),
+    path('quiz/', include('apps.quiz.urls'))
 ]
 
 if DEBUG:

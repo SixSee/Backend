@@ -1,4 +1,6 @@
+import jwt
 import requests
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 
 from Excelegal.settings import base as config
 from .models import User
@@ -62,3 +64,46 @@ def create_user(email, password=None, **kwargs) -> User:
     user.full_clean()
     user.save()
     return user
+
+
+class Email:
+    TO = []
+    FROM = config.EMAIL_HOST_USER
+    CONTENT = ""
+    SUBJECT = None
+
+    def __init__(self, to: list = None, subject=None):
+        self.TO = to
+        self.SUBJECT = subject
+
+    def send_email(self):
+        email = EmailMultiAlternatives(subject=self.SUBJECT, from_email=self.FROM, to=self.TO)
+        email.content_subtype = "html"
+        email.body = f"{self.CONTENT}"
+        return email.send()
+
+
+class MagicLink():
+    SECRET = config.SECRET_KEY
+    USER: User = None
+    ALGORITHM = ["HS256"]
+    FE_URL = config.FRONTEND_URL
+
+    def __init__(self, user: User = None):
+        self.USER = user
+
+    def create_encoded_token(self, link_type=None, user: User = None):
+        data = {
+            'type': link_type,
+            "user_id": str(self.USER.id),
+        }
+        encoded_jwt = jwt.encode(data, self.SECRET, algorithm=self.ALGORITHM[0])
+        return encoded_jwt
+
+    def decode_token(self, token):
+        decoded_jwt = jwt.decode(token, self.SECRET, algorithms=self.ALGORITHM)
+        return decoded_jwt
+
+    def create_magic_link(self, link_type=None):
+        token = self.create_encoded_token(link_type, self.USER)
+        return f"{self.FE_URL}{link_type}?key={token}"

@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework_nested import routers
 
-from .views import CourseViewSet, CourseTopicViewSet, CourseReviewView
+from .views import (CourseViewSet, CourseTopicViewSet, CourseReviewView)
 
 router = routers.SimpleRouter()
 router.register(r'course', CourseViewSet, basename='course')

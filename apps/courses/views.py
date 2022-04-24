@@ -21,12 +21,14 @@ class CourseViewSet(ViewSet):
 
         class Meta:
             model = Course
-            fields = ['id', 'title', 'image', 'slug', 'description', 'topics', 'reviews']
+            fields = ['id', 'title', 'is_archived', 'image', 'slug', 'description', 'topics', 'reviews']
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True, allow_null=False, allow_blank=False)
         description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
         image = serializers.ImageField(required=False, allow_null=False, allow_empty_file=False)
+        is_live = serializers.BooleanField(required=False, allow_null=False)
+        is_archived = serializers.BooleanField(required=False, allow_null=False)
 
     def list(self, request):
         user = request.user
