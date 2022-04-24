@@ -220,6 +220,8 @@ class UserInfoView(APIView):
 class MagicLinkVerifyView(APIView):
     def post(self, request):
         token = request.data.get('token')
+        import pdb
+        pdb.set_trace()
         if not token:
             return respond(400, "field token required")
         magic_link = MagicLink()
@@ -235,7 +237,9 @@ class MagicLinkVerifyView(APIView):
 
         elif token_type == 'forgot-password':
             try:
-                password = requests.data.get('password', None)
+                password = request.data.get('password', "")
+                if not password:
+                    return respond(400, "Password field is required")
                 user.set_password(password)
                 user.save()
                 return respond(200, "Password changed successfully!")
