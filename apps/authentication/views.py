@@ -246,7 +246,7 @@ class MagicLinkVerifyView(APIView):
 
 
 class ForgotPasswordView(APIView, SendEmail):
-    def post(self):
+    def post(self, request):
         body = request.data
         if "email" not in body:
             return respond(200, "Email required")
