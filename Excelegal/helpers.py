@@ -46,9 +46,10 @@ class GenericDao:
     def get_by_id(self, id):
         return self.model.objects.filter(pk=id).first()
 
-    def save_from_dict(self, data_dict, pk=None):
-        obj, created = self.model.objects.update_or_create(**data_dict)
-        return obj, created
+    def save_from_dict(self, data_dict: dict, instance):
+        for attr, val in data_dict.items():
+            setattr(instance, attr, val)
+        return instance.save()
 
 
 def validate_image(image):

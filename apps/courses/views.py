@@ -27,7 +27,6 @@ class CourseViewSet(ViewSet):
         title = serializers.CharField(max_length=255, required=True, allow_null=False, allow_blank=False)
         description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
         image = serializers.ImageField(required=False, allow_null=False, allow_empty_file=False)
-        is_live = serializers.BooleanField(required=False, allow_null=False)
         is_archived = serializers.BooleanField(required=False, allow_null=False)
 
     def list(self, request):
@@ -69,15 +68,7 @@ class CourseViewSet(ViewSet):
             serializer = self.InputSerializer(data=body)
             if not serializer.is_valid():
                 return respond(200, "Fail", serializer.errors)
-            serializer.validated_data['id'] = course.id
-            course.title = serializer.validated_data.get('title', course.title)
-            course.description = serializer.validated_data.get('description', course.description)
-            course.is_archived = serializer.validated_data.get('is_archived', course.is_archived)
-            if user.isAdmin():
-                course.is_live = serializer.validated_data.get('is_live', course.is_live)
-            course.save()
-            # course.objects.update(**serializer.validated_data)
-            # dao_handler.course_dao.save_from_dict(serializer.validated_data)
+            dao_handler.course_dao.save_from_dict(serializer.validated_data, course)
             return respond(200, "Success")
         else:
             return respond(400, "You dont have permission")
@@ -170,11 +161,8 @@ class CourseTopicViewSet(ViewSet):
                                   .exists())
             if topic_index_exists:
                 # shift down other topics
-                dao_handler.topic_dao.shift_topics_down(index, course)
-            topic.title = serializer.validated_data.get('title', topic.title)
-            topic.text = serializer.validated_data.get('text', topic.text)
-            topic.index = serializer.validated_data.get('index', topic.index)
-            topic.save()
+                dao_handler.topic_dao.shift_topics_down(index, topic.course)
+            dao_handler.topic_dao.save_from_dict(serializer.validated_data, topic)
             return respond(200, "Success")
         else:
             return respond(400, "You dont have permission")
@@ -244,7 +232,5 @@ class CourseReviewView(APIView):
         if user.id != review.review_by.id:
             return respond(400, "This review doesn't belong to you")
 
-        review.text = serializer.validated_data.get('text')
-        review.rating = serializer.validated_data.get('rating')
-        review.save()
+        dao_handler.course_review_dao.save_from_dict(serializer.validated_data, review)
         return respond(200, "Success")

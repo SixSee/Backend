@@ -9,10 +9,10 @@ from .models import Course, Topic
 def set_slug_course(sender, instance, *args, **kwargs):
     if not instance.slug:
         instance.slug = unique_slug_generator(Course, instance.title)
-
+        return
     prev_instance = Course.objects.filter(pk=instance.pk).first()
 
-    if prev_instance and prev_instance.title is not instance.title:
+    if prev_instance and (prev_instance.title != instance.title):
         instance.slug = unique_slug_generator(Course, instance.title)
 
 

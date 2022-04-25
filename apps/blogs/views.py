@@ -54,11 +54,10 @@ class BlogsViewSet(ViewSet):
         serializer = self.OutputSerializer(blog)
         return respond(200, "Success", serializer.data)
 
-    def update(self, request, blob_slug=None):
+    def update(self, request, blog_slug=None):
         user = request.user
         body = request.data
-        blog = dao_handler.blogs_dao.get_by_slug(blob_slug)
-
+        blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
         if not blog:
             return respond(400, "No blog with this slug")
 
@@ -67,10 +66,7 @@ class BlogsViewSet(ViewSet):
             if not serializer.is_valid():
                 return respond(200, "Fail", serializer.errors)
             serializer.validated_data['owner'] = user
-            serializer.validated_data['id'] = blog.id
-            blog, created = dao_handler.blogs_dao.save_from_dict(serializer.validated_data)
-            if created:
-                print("error in update blog. Created another blog")
+            dao_handler.blogs_dao.save_from_dict(serializer.validated_data, blog)
             return respond(200, "Success")
         else:
             return respond(400, "You dont have permission")
