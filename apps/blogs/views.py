@@ -89,7 +89,7 @@ class BlogsViewSet(ViewSet):
         blog.save()
         return respond(200, "Success")
 
-    def destroy(self, request, blob_slug=None):
+    def destroy(self, request, blog_slug=None):
         user = request.user
         blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
         if not blog:
