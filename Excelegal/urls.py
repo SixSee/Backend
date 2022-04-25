@@ -1,11 +1,18 @@
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import path, include, re_path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
 from .settings.base import DEBUG, MEDIA_URL, MEDIA_ROOT
+
+
+def home(request):
+    return HttpResponse(
+        f"Api server running. <a href='{request.scheme}://{request.META['HTTP_HOST']}{request.path}swagger'>Swagger here!</a>")
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -22,7 +29,8 @@ urlpatterns = [
     path('auth/', include('apps.authentication.urls')),
     path('', include('apps.courses.urls')),
     path('blog/', include('apps.blogs.urls')),
-    path('quiz/', include('apps.quiz.urls'))
+    path('quiz/', include('apps.quiz.urls')),
+    path('', home, name="HOME")
 ]
 
 if DEBUG:
