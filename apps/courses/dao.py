@@ -5,8 +5,8 @@ from .models import Course, Topic, CourseReview
 class CourseDao(GenericDao):
     model = Course
 
-    def create_course(self, title, description, owner):
-        course = self.model(title=title, description=description, owner=owner)
+    def create_course(self, title, description, owner, is_archived=False):
+        course = self.model(title=title, description=description, owner=owner, is_archived=is_archived)
         course.save()
         return course
 

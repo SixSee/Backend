@@ -33,6 +33,12 @@ class Blog(models.Model):
     def __str__(self):
         return f"{self.title[:10]}->{self.type}->{self.owner.email}"
 
+    def get_avg_rating(self) -> int:
+        ratings = self.reviews.all().values_list('rating')
+        if ratings:
+            return round(sum(ratings) / len(ratings))
+        return 0
+    
 
 class BlogReview(models.Model):
     blog = models.ForeignKey(Blog, related_name='reviews', on_delete=models.CASCADE)

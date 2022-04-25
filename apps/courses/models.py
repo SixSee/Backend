@@ -22,6 +22,12 @@ class Course(models.Model):
     def get_image_url(self):
         return self.image.url
 
+    def get_avg_rating(self) -> int:
+        ratings = self.reviews.all().values_list('rating')
+        if ratings:
+            return round(sum(ratings) / len(ratings))
+        return 0
+
 
 class Topic(models.Model):
     course = models.ForeignKey(Course, related_name='topics', on_delete=models.CASCADE)

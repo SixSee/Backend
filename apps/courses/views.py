@@ -1,12 +1,14 @@
 from django.utils import timezone
 from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
 import apps.courses.models
 from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
+from .helpers import get_latest_courses
+from apps.authentication.serializers import UserSerializer
 from .models import Course, Topic, CourseReview
 from .serializers import TopicSerializer, CourseReviewSerializer
 
@@ -16,12 +18,9 @@ class CourseViewSet(ViewSet):
     lookup_field = 'slug'
 
     class OutputSerializer(serializers.ModelSerializer):
-        topics = TopicSerializer(many=True)
-        reviews = CourseReviewSerializer(many=True)
-
         class Meta:
             model = Course
-            fields = ['id', 'title', 'is_archived', 'image', 'slug', 'description', 'topics', 'reviews']
+            fields = ['id', 'title', 'is_archived', 'image', 'slug', 'description']
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True, allow_null=False, allow_blank=False)
@@ -234,3 +233,23 @@ class CourseReviewView(APIView):
 
         dao_handler.course_review_dao.save_from_dict(serializer.validated_data, review)
         return respond(200, "Success")
+
+
+class LatestCoursesView(APIView):
+    permission_classes = [AllowAny]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        avg_rating = serializers.SerializerMethodField()
+        owner = UserSerializer()
+        class Meta:
+            model = Course
+            fields = ('title', 'slug', 'reviews', 'avg_rating', 'owner', 'image', 'description')
+            depth = 1
+
+        def get_avg_rating(self, instance):
+            return instance.get_avg_rating()
+
+    def get(self, request):
+        print(get_latest_courses())
+        serializer = self.OutputSerializer(get_latest_courses(), many=True)
+        return respond(200, "Success", serializer.data)

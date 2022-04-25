@@ -3,7 +3,8 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .views import (UserInfoView, UserSignupView, AdminLoginView, AdminSignupView, UserLoginView, GoogleLoginView, MagicLinkVerifyView, ForgotPasswordView)
+from .views import (UserInfoView, UserSignupView, AdminLoginView, AdminSignupView, UserLoginView, GoogleLoginView,
+                    MagicLinkVerifyView, ForgotPasswordView, ChangePasswordView)
 
 urlpatterns = [
     # Get user info
@@ -23,5 +24,7 @@ urlpatterns = [
 
     path('magic-link/', MagicLinkVerifyView.as_view()),
 
-    path('forgot-password/', ForgotPasswordView.as_view())
+    path('forgot-password/', ForgotPasswordView.as_view()),
+
+    path('change-password/', ChangePasswordView.as_view()),
 ]

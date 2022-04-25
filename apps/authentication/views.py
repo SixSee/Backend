@@ -109,7 +109,7 @@ class AdminSignupView(APIView, SendEmail):
                 return respond(200, "Verify your email")
             else:
                 return respond(200, "Error in sending email")
-            return respond(400, "Error", serializer.errors)
+        return respond(400, "Error", serializer.errors)
 
 
 class UserLoginView(APIView, SendEmail):
@@ -261,3 +261,21 @@ class ForgotPasswordView(APIView, SendEmail):
         if status:
             return respond(200, "Email Sent to create new password")
         return respond(400, "Error in sending email")
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        body = request.data
+        if "password" not in body:
+            return respond(400, "Password Field required")
+        password = body.get("password")
+        try:
+            user.set_password(password)
+            user.save()
+        except Exception as err:
+            print(err)
+            return respond(400, str(err))
+        return respond(200, "Password Changed Successfully")
