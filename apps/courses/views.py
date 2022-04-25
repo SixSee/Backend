@@ -32,10 +32,10 @@ class CourseViewSet(ViewSet):
     def list(self, request):
         user = request.user
         # todo-> seperate apis for getting courses for main site or admin panel?
-        if not user.is_anonymous and user.isAdmin:
-            courses = Course.objects.all()
+        if not user.is_anonymous and user.isAdmin():
+            courses = Course.objects.order_by('id').all()
         else:
-            courses = Course.objects.filter(is_archived=False)
+            courses = Course.objects.filter(is_archived=False, is_live=True).order_by('id').all()
         serializer = self.OutputSerializer(courses, many=True)
         return respond(200, "Success", serializer.data)
 
