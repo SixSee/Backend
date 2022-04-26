@@ -8,22 +8,33 @@ from apps.authentication.models import User
 from apps.courses.models import Course
 
 
+class Subjects(models.Model):
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name}"
+
+
 class Question(models.Model):
     class QuestionDifficulty(models.TextChoices):
         easy = "easy", _("Easy")
         medium = "medium", _("Medium")
         hard = "hard", _("Hard")
 
-    course = models.ManyToManyField(Course)
+    courses = models.ManyToManyField(Course, blank=True)
+    subjects = models.ManyToManyField(Subjects, blank=False)
     name = models.TextField()
     difficulty = models.CharField(max_length=15, choices=QuestionDifficulty.choices, default=QuestionDifficulty.easy)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     explanation = models.TextField()
+    is_approved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"for course:{self.course.id} -> {self.name[:10]}"
+        return f"{self.name[:10]}"
 
 
 class QuestionChoice(models.Model):
@@ -31,14 +42,15 @@ class QuestionChoice(models.Model):
         correct = 1
         incorrect = 0
 
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question,related_name="choices", on_delete=models.CASCADE)
     choice = models.TextField()
     is_correct = models.IntegerField(default=Status.incorrect, choices=Status.choices)
 
 
 class Quiz(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    course = models.ManyToManyField(Course)
+    courses = models.ManyToManyField(Course)
+    subjects = models.ManyToManyField(Subjects)
     name = models.TextField()
     participation = models.IntegerField(default=0)
     max_time = models.TimeField()

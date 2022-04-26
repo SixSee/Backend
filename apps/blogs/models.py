@@ -31,7 +31,7 @@ class Blog(models.Model):
         return self.image.url
 
     def __str__(self):
-        return f"{self.title[:10]}->{self.type}->{self.owner.email}"
+        return f"{self.title[:10]}->{self.type}"
 
     def get_avg_rating(self) -> int:
         ratings = self.reviews.all().values_list('rating')

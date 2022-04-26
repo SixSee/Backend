@@ -42,4 +42,4 @@ class User(AbstractUser):
         return self.role == 2
 
     def isAdmin(self):
-        return self.role == 3
+        return self.role == 3 or self.is_superuser
