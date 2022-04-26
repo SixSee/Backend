@@ -10,14 +10,20 @@ class CourseAdmin(admin.ModelAdmin):
         'id',
         'title',
         'slug',
-        'description',
+        'is_archived',
+        'is_live',
         'owner',
         'image',
-        'is_archived',
         'created_at',
         'updated_at',
     )
-    list_filter = ('owner', 'is_archived', 'created_at', 'updated_at')
+    list_filter = (
+        'owner',
+        'is_archived',
+        'is_live',
+        'created_at',
+        'updated_at',
+    )
     search_fields = ('slug',)
     date_hierarchy = 'created_at'
 
@@ -30,11 +36,11 @@ class TopicAdmin(admin.ModelAdmin):
         'title',
         'slug',
         'index',
-        'text',
         'created_at',
         'updated_at',
     )
-    list_filter = ('course', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    raw_id_fields = ('course',)
     search_fields = ('slug',)
     date_hierarchy = 'created_at'
 
