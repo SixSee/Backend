@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import (Question, QuestionChoice, Subjects)
+from .models import (Question, QuestionChoice, Subjects, Quiz)
 
 
 class QuestionChoiceSerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     def get_created_by(self, instance):
         return instance.created_by.id if instance.created_by else None
 
-    def create(self, validated_data:dict):
+    def create(self, validated_data: dict):
         subjects_list = []
         subjects = validated_data.pop('subjects')
 
@@ -70,3 +70,43 @@ class QuestionSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class NormalQuestionSerializer(serializers.ModelSerializer):
+    subjects = SubjectsSerializer(many=True)
+    created_by = serializers.UUIDField(required=True)
+
+    class Meta:
+        model = Question
+        fields = ("id", "name", "explanation", "is_approved", "subjects", "choices", "created_by")
+        depth = 1
+        read_only_fields = ['id']
+
+    def get_created_by(self, instance):
+        return instance.created_by.id if instance.created_by else None
+
+
+class ListQuizSerializer(serializers.ModelSerializer):
+    subjects = SubjectsSerializer(many=True)
+
+    class Meta:
+        model = Quiz
+        fields = ("id", "name", "max_time", "is_approved",
+                  "is_completed", "no_of_questions", "subjects", "owner")
+
+
+class QuizSerializer(serializers.ModelSerializer):
+    subjects = SubjectsSerializer(many=True)
+    question_ids = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Quiz
+        fields = ("id", "name", "max_time", "is_approved",
+                  "is_completed", "no_of_questions", "subjects", "owner", "question_ids")
+
+    def get_question_ids(self, instance):
+        questions = instance.get_list_of_questions()
+        question_objs = [Question.objects.filter(pk=id).first() for id in questions]
+
+        serializer = NormalQuestionSerializer(question_objs, many=True)
+        return serializer.data

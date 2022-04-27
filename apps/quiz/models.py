@@ -34,7 +34,7 @@ class Question(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name[:10]}"
+        return f"{self.name[:100]}"
 
 
 class QuestionChoice(models.Model):
@@ -49,20 +49,23 @@ class QuestionChoice(models.Model):
 
 class Quiz(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    courses = models.ManyToManyField(Course, blank=True, null=True)
+    courses = models.ManyToManyField(Course, blank=True)
     subjects = models.ManyToManyField(Subjects)
     name = models.TextField()
     participation = models.IntegerField(default=0)
-    max_time = models.TimeField()
+    max_time = models.IntegerField(verbose_name='Time limit in minutes')
     is_approved = models.BooleanField(default=False)
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     no_of_questions = models.IntegerField(default=0)
-    question_ids = models.TextField(blank=True, null=True)
+    question_ids = models.TextField(default='[]')
 
-    def add_list_of_questions(self, questions: 'QuerySet[int]'):  # <QuerySet [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]>
+    def add_list_of_questions(self, questions: 'list[int]'):  # <QuerySet [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]>
         self.question_ids = str(list(questions))
+
+    def get_list_of_questions(self):
+        return json.loads(self.question_ids)
 
     def add_question(self, question_id: int):
         question_ids_json: list = json.loads(self.question_ids)
