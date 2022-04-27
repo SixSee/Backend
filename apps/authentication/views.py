@@ -50,7 +50,7 @@ class AdminLoginView(APIView, SendEmail):
             if status:
                 return respond(200, "Please Verify your email")
             else:
-                return respond(200, "Error in sending email")
+                return respond(400, "Error in sending email")
 
         if user.check_password(password):
             refresh = RefreshToken.for_user(user)
@@ -58,7 +58,7 @@ class AdminLoginView(APIView, SendEmail):
             user.save()
             return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
         else:
-            return respond(200, "Email or Password incorrect")
+            return respond(401, "Email or Password incorrect")
 
 
 class UserSignupView(APIView, SendEmail):
@@ -71,7 +71,7 @@ class UserSignupView(APIView, SendEmail):
                 if status:
                     return respond(200, "Verify your email")
                 else:
-                    return respond(200, "Error in sending email")
+                    return respond(400, "Error in sending email")
             else:
                 return respond(400, "Email already registered")
         serializer = UserSerializer(data=request.data)
@@ -80,10 +80,9 @@ class UserSignupView(APIView, SendEmail):
             # Email verification
             status = self.send_verification_email(user)
             if status:
-                print(status, " email send status")
                 return respond(200, "Verify your email")
             else:
-                return respond(200, "Error in sending email")
+                return respond(400, "Error in sending email")
         return respond(400, "Error", serializer.errors)
 
 
@@ -105,10 +104,9 @@ class AdminSignupView(APIView, SendEmail):
             # Email verification
             status = self.send_verification_email(user)
             if status:
-                print(status, "email send status")
                 return respond(200, "Verify your email")
             else:
-                return respond(200, "Error in sending email")
+                return respond(400, "Error in sending email")
         return respond(400, "Error", serializer.errors)
 
 
@@ -116,20 +114,20 @@ class UserLoginView(APIView, SendEmail):
     def post(self, request, format=None):
         body = request.data
         if ("email" not in body) or ("password" not in body):
-            return respond(200, "Email and Password required")
+            return respond(400, "Email and Password required")
 
         email = body.get('email')
         password = body.get('password')
         user = User.objects.filter(email=email).first()
         if not user:
-            return respond(200, "No user with provided email")
+            return respond(400, "No user with provided email")
 
         if not user.is_email_verified:
             status = self.send_verification_email(user=user)
             if status:
                 return respond(200, "Please Verify your email")
             else:
-                return respond(200, "Error in sending email")
+                return respond(400, "Error in sending email")
 
         if user.check_password(password):
             refresh = RefreshToken.for_user(user)
@@ -137,7 +135,7 @@ class UserLoginView(APIView, SendEmail):
             user.save()
             return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
         else:
-            return respond(200, "Email or Password incorrect")
+            return respond(401, "Email or Password incorrect")
 
 
 class GoogleLoginView(APIView):

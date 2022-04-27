@@ -74,9 +74,7 @@ class BlogsViewSet(ViewSet):
     def create(self, request):
         user = request.user
         body = request.data
-        print(request.user)
         serializer = self.InputSerializer(data=body)
-        print(body)
         if not serializer.is_valid():
             return respond(400, "Fail", serializer.errors)
         if user.isStudent():

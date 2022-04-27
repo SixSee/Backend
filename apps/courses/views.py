@@ -250,6 +250,5 @@ class LatestCoursesView(APIView):
             return instance.get_avg_rating()
 
     def get(self, request):
-        print(get_latest_courses())
         serializer = self.OutputSerializer(get_latest_courses(), many=True)
         return respond(200, "Success", serializer.data)

@@ -16,17 +16,17 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
+        'is_approved',
         'difficulty',
         'created_by',
         'explanation',
         'created_at',
         'updated_at',
     )
-    list_filter = ('created_by', 'created_at', 'updated_at')
+    list_filter = ('created_by', 'is_approved', 'created_at', 'updated_at')
     raw_id_fields = ('courses', 'subjects')
     search_fields = ('name',)
     date_hierarchy = 'created_at'
-    filter_horizontal = ('subjects', 'courses')
 
 
 @admin.register(QuestionChoice)
@@ -41,6 +41,7 @@ class QuizAdmin(admin.ModelAdmin):
         'id',
         'owner',
         'name',
+        'is_approved',
         'participation',
         'max_time',
         'is_completed',

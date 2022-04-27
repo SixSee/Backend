@@ -42,18 +42,19 @@ class QuestionChoice(models.Model):
         correct = 1
         incorrect = 0
 
-    question = models.ForeignKey(Question,related_name="choices", on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, related_name="choices", on_delete=models.CASCADE)
     choice = models.TextField()
     is_correct = models.IntegerField(default=Status.incorrect, choices=Status.choices)
 
 
 class Quiz(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    courses = models.ManyToManyField(Course)
+    courses = models.ManyToManyField(Course, blank=True, null=True)
     subjects = models.ManyToManyField(Subjects)
     name = models.TextField()
     participation = models.IntegerField(default=0)
     max_time = models.TimeField()
+    is_approved = models.BooleanField(default=False)
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
