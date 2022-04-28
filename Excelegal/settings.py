@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'apps.courses.apps.CoursesConfig',
     'apps.blogs.apps.BlogsConfig',
     'apps.quiz.apps.QuizConfig',
+    'apps.bulletin.apps.BulletinConfig',
 ]
 
 AUTH_USER_MODEL = "authentication.User"
