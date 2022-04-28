@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -6,8 +9,9 @@ from rest_framework.viewsets import ViewSet
 
 from Excelegal.helpers import respond
 from .helpers import get_random_questions_for_quiz
-from .models import Subjects, Question, Quiz
-from .serializers import (QuestionSerializer, SubjectsSerializer, ListQuizSerializer, QuizSerializer)
+from .models import Subjects, Question, Quiz, UserAttemptedQuiz, UserAttemptedQuestion
+from .serializers import (QuestionSerializer, SubjectsSerializer, ListQuizSerializer, QuizSerializer,
+                          QuestionChoiceSerializer_wo_correct)
 
 
 class QuestionViewSet(ViewSet):
@@ -218,7 +222,111 @@ class LatestQuizzesView(APIView):
         return respond(200, "Success", serializer.data)
 
 
-class StartQuiz(APIView):
-    def get(self, request):
+class StartQuizView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None):
         user = request.user
+        body = request.data
+
+        quiz = Quiz.objects.filter(pk=pk).first()
+        if not quiz:
+            return respond(400, "No quiz found with this id")
+
+        if UserAttemptedQuiz.objects.filter(user=user, quiz=quiz).exists():
+            return respond(200, "Quiz already started continue to questions")
+
+        user_quiz = UserAttemptedQuiz.objects.create(user=user,
+                                                     quiz=quiz,
+                                                     started_at=timezone.now())
+        return respond(201, "Success")
+
+
+class UserQuizQuestionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        choices = QuestionChoiceSerializer_wo_correct(many=True)
+        created_by = serializers.UUIDField()
+
+        class Meta:
+            model = Question
+            fields = ("id", "name", "choices", "created_by")
+            depth = 1
+
+    def get(self, request, pk=None):
+        user = request.user
+        quiz = Quiz.objects.filter(pk=pk).first()
+        if not quiz:
+            return respond(400, "No quiz found with this id")
+        user_quiz = UserAttemptedQuiz.objects.filter(user=user, quiz=quiz)
+        if not user_quiz.exists():
+            return respond(400, "Start Quiz before viewing all questions")
+        user_quiz = user_quiz.first()
+        quiz_question_ids = user_quiz.quiz.get_list_of_questions()
+        quiz_question_objs = [Question.objects.filter(pk=pk).first() for pk in quiz_question_ids]
+        serializer = self.OutputSerializer(quiz_question_objs, many=True)
+        return respond(200, "Success", serializer.data)
+
+
+class UserQuizAttemptView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def can_attempt_quiz(self, started_at, max_time):
+        current_time = timezone.now()
+        return current_time <= (started_at + timedelta(minutes=max_time))
+
+    def post(self, request, pk=None):
+        user = request.user
+        body: dict = request.data
+        current_time = timezone.now()
+        quiz = Quiz.objects.filter(pk=pk).first()
+        if not quiz:
+            return respond(400, "No quiz found with this id")
+        max_time_minutes = quiz.max_time
+        user_quiz = quiz.userattemptedquiz_set.filter(user=user).first()
+        if not user_quiz:
+            return respond(400, "Quiz not started")
+
+        if not self.can_attempt_quiz(user_quiz.started_at, max_time_minutes):
+            return respond(400, "Time is up")
+
+        if ("question_id" not in body.keys()) and ("choice_selected_id" not in body.keys()):
+            return respond(400, "Need question_id and choice_selected_id. Wrong body format")
+
+        question_id = int(body.get('question_id'))
+        choice_selected_id = int(body.get('choice_selected_id'))
+        attempt_already = (UserAttemptedQuestion.objects
+                           .filter(user_quiz=user_quiz,
+                                   question_id=question_id)
+                           .first())
+        question_ids = quiz.get_list_of_questions()
+
+        if question_id in question_ids:
+            question = Question.objects.get(pk=question_id)
+            question_choice = question.choices.get(pk=choice_selected_id)
+            if attempt_already:
+                attempt_already.choice_selected = question_choice.id
+                attempt_already.save()
+                return respond(200, "Attempt Updated")
+
+            user_q_attempt = UserAttemptedQuestion.objects.create(
+                question=question,
+                choice_selected=question_choice.id,
+                user_quiz_id=user_quiz.id
+            )
+            user_quiz.add_attempt(user_q_attempt.id)
+            user_quiz.save()
+            return respond(200, "Attempt Recorded")
+        else:
+            return respond(400, "TMKC")
+
+
+class UserCompleteQuiz(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk=None):
+        user = request.user
+        body = request.data
+
         pass

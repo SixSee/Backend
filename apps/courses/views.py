@@ -7,10 +7,10 @@ from rest_framework.viewsets import ViewSet
 import apps.courses.models
 from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
-from .helpers import get_latest_courses
 from apps.authentication.serializers import UserSerializer
+from .helpers import get_latest_courses
 from .models import Course, Topic, CourseReview
-from .serializers import TopicSerializer, CourseReviewSerializer
+from .serializers import CourseReviewSerializer
 
 
 class CourseViewSet(ViewSet):
@@ -18,9 +18,12 @@ class CourseViewSet(ViewSet):
     lookup_field = 'slug'
 
     class OutputSerializer(serializers.ModelSerializer):
+        reviews = CourseReviewSerializer(many=True)
+
         class Meta:
             model = Course
-            fields = ['id', 'title', 'is_archived', 'image', 'slug', 'description']
+            fields = ['id', 'title', 'is_archived', 'image', 'slug', 'description', 'reviews']
+            depth = 1
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True, allow_null=False, allow_blank=False)
@@ -241,6 +244,7 @@ class LatestCoursesView(APIView):
     class OutputSerializer(serializers.ModelSerializer):
         avg_rating = serializers.SerializerMethodField()
         owner = UserSerializer()
+
         class Meta:
             model = Course
             fields = ('title', 'slug', 'reviews', 'avg_rating', 'owner', 'image', 'description')

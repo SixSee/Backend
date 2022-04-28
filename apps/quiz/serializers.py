@@ -9,6 +9,12 @@ class QuestionChoiceSerializer(serializers.ModelSerializer):
         fields = ("choice", "is_correct")
 
 
+class QuestionChoiceSerializer_wo_correct(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionChoice
+        fields = ["id", "choice"]
+
+
 class SubjectsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subjects

@@ -81,26 +81,18 @@ class Quiz(models.Model):
         return self.userattemptedquiz_set.count()
 
 
-class UserAttemptedQuestion(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    choice_selected = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def is_choice_correct(self):
-        return self.question.questionchoice_set.get(id=self.choice_selected).get_is_correct_display()
-
-
 class UserAttemptedQuiz(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     started_at = models.DateTimeField()
-    # question_ids = models.TextField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
-    attempted_questions = models.TextField(blank=True, null=True)
+    attempted_questions = models.TextField(default='[]')
 
     def add_list_of_attempted_questions(self, questions: 'QuerySet[int]'):
         self.attempted_questions = json.dumps(questions)
+
+    def get_list_of_attempted_questions(self):
+        return json.loads(self.attempted_questions)
 
     def add_attempt(self, question_id: int):
         attempted_question_json: list = json.loads(self.attempted_questions)
@@ -114,3 +106,14 @@ class UserAttemptedQuiz(models.Model):
 
     def no_of_attempted_questions(self):
         return len(json.loads(self.attempted_questions))
+
+
+class UserAttemptedQuestion(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    choice_selected = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    user_quiz = models.ForeignKey(UserAttemptedQuiz, on_delete=models.CASCADE, default=None)
+
+    def is_choice_correct(self):
+        return self.question.questionchoice_set.get(id=self.choice_selected).get_is_correct_display()
