@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework import routers
 
-from .views import (ListSubjectsView, QuestionViewSet, QuizViewSet, LatestQuizzesView, StartQuizView, UserQuizQuestionsView, UserQuizAttemptView)
+from .views import (ListSubjectsView, QuestionViewSet, QuizViewSet, LatestQuizzesView, StartQuizView, UserQuizQuestionsView, UserQuizAttemptView, UserCompleteQuiz)
 
 router = routers.SimpleRouter()
 router.register(r'question', QuestionViewSet, basename='question')
@@ -15,5 +15,6 @@ urlpatterns = [
     path('start-quiz/<pk>', StartQuizView.as_view()),
     path('start-quiz/<int:pk>/questions', UserQuizQuestionsView.as_view()),
     path('start-quiz/<int:pk>/attempt-question', UserQuizAttemptView.as_view()),
+    path('start-quiz/<int:pk>/complete', UserCompleteQuiz.as_view()),
     path('', include(router.urls)),
 ]

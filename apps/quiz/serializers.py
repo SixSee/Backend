@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import (Question, QuestionChoice, Subjects, Quiz)
+from .models import (Question, QuestionChoice, Subjects, Quiz, UserAttemptedQuestion)
 
 
 class QuestionChoiceSerializer(serializers.ModelSerializer):
@@ -115,4 +115,27 @@ class QuizSerializer(serializers.ModelSerializer):
         question_objs = [Question.objects.filter(pk=id).first() for id in questions]
 
         serializer = NormalQuestionSerializer(question_objs, many=True)
+        return serializer.data
+
+
+class UserAttemptedQuestionSerializer(serializers.ModelSerializer):
+    choice_selected = serializers.SerializerMethodField()
+    is_correct = serializers.SerializerMethodField()
+    question = serializers.SerializerMethodField()
+
+    class Meta: 
+        model = UserAttemptedQuestion
+        fields = ("question", "choice_selected", "created_at", "is_correct")
+
+    def get_choice_selected(self, instance):
+        questionchoice = QuestionChoice.objects.filter(pk=instance.choice_selected).first()
+        return QuestionChoiceSerializer_wo_correct(questionchoice).data
+
+    def get_is_correct(self, instance):
+        return instance.is_choice_correct()
+
+    def get_question(self, instance):
+        question = instance.question
+        serializer = NormalQuestionSerializer(question)
+        serializer.data.pop('choices')
         return serializer.data

@@ -116,4 +116,5 @@ class UserAttemptedQuestion(models.Model):
     user_quiz = models.ForeignKey(UserAttemptedQuiz, on_delete=models.CASCADE, default=None)
 
     def is_choice_correct(self):
-        return self.question.questionchoice_set.get(id=self.choice_selected).get_is_correct_display()
+
+        return self.question.choices.get(id=self.choice_selected).get_is_correct_display()

@@ -8,10 +8,11 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
 from Excelegal.helpers import respond
+from apps.authentication.serializers import UserSerializer
 from .helpers import get_random_questions_for_quiz
 from .models import Subjects, Question, Quiz, UserAttemptedQuiz, UserAttemptedQuestion
 from .serializers import (QuestionSerializer, SubjectsSerializer, ListQuizSerializer, QuizSerializer,
-                          QuestionChoiceSerializer_wo_correct)
+                          QuestionChoiceSerializer_wo_correct, UserAttemptedQuestionSerializer)
 
 
 class QuestionViewSet(ViewSet):
@@ -325,8 +326,41 @@ class UserQuizAttemptView(APIView):
 class UserCompleteQuiz(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, pk=None):
-        user = request.user
-        body = request.data
+    class OutputSerializer(serializers.ModelSerializer):
+        no_of_attempted_questions = serializers.SerializerMethodField()
+        user = UserSerializer()
+        attempts = serializers.SerializerMethodField()
+        user_quiz_id = serializers.SerializerMethodField()
+        class Meta:
+            model = UserAttemptedQuiz
+            fields = ("user_quiz_id", "user", "started_at",
+                      "completed_at", "no_of_attempted_questions",
+                      "attempts")
 
-        pass
+        def get_user_quiz_id(self, instance):
+            return instance.id
+
+        def get_no_of_attempted_questions(self, instance):
+            return instance.no_of_attempted_questions()
+
+        def get_attempts(self, instance):
+            attempted_question_ids = instance.get_list_of_attempted_questions()
+            attempted_question_objs = [UserAttemptedQuestion.objects.get(pk=pk)
+                                       for pk in attempted_question_ids]
+            serializer = UserAttemptedQuestionSerializer(attempted_question_objs, many=True)
+            return serializer.data
+
+    def post(self, request, pk=None):
+        user = request.user
+
+        quiz = Quiz.objects.filter(pk=pk).first()
+        if not quiz:
+            return respond(400, "No quiz found with this id")
+
+        user_quiz = quiz.userattemptedquiz_set.filter(user=user).first()
+        if not user_quiz:
+            return respond(400, "Quiz not started")
+        user_quiz.completed_at = timezone.now()
+        user_quiz.save()
+        serializer = self.OutputSerializer(user_quiz)
+        return respond(200, "Success", serializer.data)
