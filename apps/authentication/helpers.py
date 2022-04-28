@@ -2,7 +2,7 @@ import jwt
 import requests
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 
-from Excelegal.settings import base as config
+from Excelegal import settings as config
 from .models import User
 
 

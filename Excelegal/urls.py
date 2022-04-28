@@ -6,7 +6,7 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
-from .settings.base import DEBUG, MEDIA_URL, MEDIA_ROOT
+from .settings import DEBUG, MEDIA_URL, MEDIA_ROOT
 
 
 def home(request):
