@@ -4,16 +4,17 @@ from apps.authentication.serializers import UserSerializer
 from .models import Blog, BlogReview
 
 
-class BlogsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Blog
-        fields = '__all__'
-
-
 class BlogReviewSerializer(serializers.ModelSerializer):
-    review_by = UserSerializer
+    review_by = UserSerializer()
 
     class Meta:
         model = BlogReview
         fields = ['id', 'review_by', 'text', 'rating', 'created_at', 'updated_at']
 
+
+class BlogsSerializer(serializers.ModelSerializer):
+    reviews = BlogReviewSerializer(many=True)
+
+    class Meta:
+        model = Blog
+        fields = '__all__'

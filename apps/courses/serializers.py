@@ -14,7 +14,7 @@ class TopicSerializer(serializers.ModelSerializer):
 
 
 class CourseReviewSerializer(serializers.ModelSerializer):
-    review_by = UserSerializer
+    review_by = UserSerializer()
 
     class Meta:
         model = CourseReview
