@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.views import APIView
 
 from Excelegal.dao import dao_handler
@@ -58,7 +58,7 @@ class BulletinView(APIView):
         if user.role < user.STAFF:
             return respond(400, "Only for Admin and Staff")
 
-        serializer = self.InputSerializer(body)
+        serializer = self.InputSerializer(data=body)
         if not serializer.is_valid():
             return respond(400, "Failure", serializer.errors)
 
@@ -78,3 +78,38 @@ class BulletinView(APIView):
             return respond(200, "Success")
 
         return respond(400, "Not your bulletin")
+
+
+class SingleBulletinView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Bulletin
+            fields = ('title', 'slug', 'owner',
+                      'description', 'action_title', 'action_link',
+                      'visible', 'category', 'created_at', 'updated_at')
+
+    def get(self, request, slug):
+        user = request.user
+        bulletin = Bulletin.objects.filter(slug=slug).first()
+        if not bulletin:
+            return respond(400, "No bulletin with this id")
+        serializer = self.OutputSerializer(bulletin)
+        return respond(200, "Success", serializer.data)
+
+
+class ApproveBulletinView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, slug):
+        user = request.user
+        bulletin = Bulletin.objects.filter(slug=slug).first()
+        if not bulletin:
+            return respond(400, "No bulletin with this id")
+        if user.isAdmin():
+            bulletin.visible = True
+            bulletin.save()
+            return respond(200, "Success")
+        else:
+            return respond(400, "Failure")
