@@ -1,5 +1,0 @@
-name: "Excelegal Backend"
-description: "Tech stack: Django, DRF and swagger for api documentation"
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
