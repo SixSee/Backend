@@ -7,7 +7,7 @@ from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
 from apps.authentication.serializers import UserSerializer
 from .models import Blog, BlogReview
-from .serializers import BlogsSerializer
+from .serializers import BlogsSerializer, BlogReviewSerializer
 
 
 class LatestBlogView(APIView):
@@ -28,10 +28,11 @@ class BlogsViewSet(ViewSet):
 
     class OutputSerializer(serializers.ModelSerializer):
         owner = UserSerializer()
+        reviews = BlogReviewSerializer(many=True)
 
         class Meta:
             model = Blog
-            fields = '__all__'
+            fields = ("id", "title", "slug", "text", "owner", "type", "reviews")
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(required=True, allow_null=False)
