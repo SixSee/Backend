@@ -244,11 +244,11 @@ class LatestCoursesView(APIView):
     class OutputSerializer(serializers.ModelSerializer):
         avg_rating = serializers.SerializerMethodField()
         owner = UserSerializer()
+        reviews = CourseReviewSerializer(many=True)
 
         class Meta:
             model = Course
             fields = ('title', 'slug', 'reviews', 'avg_rating', 'owner', 'image', 'description')
-            depth = 1
 
         def get_avg_rating(self, instance):
             return instance.get_avg_rating()
