@@ -5,7 +5,7 @@ from Excelegal.helpers import unique_slug_generator
 from .models import Bulletin
 
 
-@receiver(pre_save, sender=Blog)
+@receiver(pre_save, sender=Bulletin)
 def set_slug_bulletin(sender, instance, *args, **kwargs):
     if not instance.slug:
         instance.slug = unique_slug_generator(Blog, instance.title)
