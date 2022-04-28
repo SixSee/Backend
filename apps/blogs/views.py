@@ -7,7 +7,7 @@ from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
 from apps.authentication.serializers import UserSerializer
 from .models import Blog, BlogReview
-from .serializers import BlogsSerializer
+from .serializers import BlogsSerializer, BlogReviewSerializer
 
 
 class LatestBlogView(APIView):
@@ -15,7 +15,7 @@ class LatestBlogView(APIView):
         blog_type = request.GET.get('type', 'blog')
         blogs = (
             Blog.objects.filter(is_archived=False, is_live=True, type=blog_type)
-                .order_by('created_at', 'updated_at')
+                .order_by('created_at', 'updated_at', 'title')
                 .all()
         )
         serializer = BlogsSerializer(blogs, many=True)
@@ -28,10 +28,11 @@ class BlogsViewSet(ViewSet):
 
     class OutputSerializer(serializers.ModelSerializer):
         owner = UserSerializer()
+        reviews = BlogReviewSerializer(many=True)
 
         class Meta:
             model = Blog
-            fields = '__all__'
+            fields = ("id", "title", "slug", "text", "owner", "type", "reviews")
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(required=True, allow_null=False)
@@ -54,11 +55,10 @@ class BlogsViewSet(ViewSet):
         serializer = self.OutputSerializer(blog)
         return respond(200, "Success", serializer.data)
 
-    def update(self, request, blob_slug=None):
+    def update(self, request, blog_slug=None):
         user = request.user
         body = request.data
-        blog = dao_handler.blogs_dao.get_by_slug(blob_slug)
-
+        blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
         if not blog:
             return respond(400, "No blog with this slug")
 
@@ -67,10 +67,7 @@ class BlogsViewSet(ViewSet):
             if not serializer.is_valid():
                 return respond(200, "Fail", serializer.errors)
             serializer.validated_data['owner'] = user
-            serializer.validated_data['id'] = blog.id
-            blog, created = dao_handler.blogs_dao.save_from_dict(serializer.validated_data)
-            if created:
-                print("error in update blog. Created another blog")
+            dao_handler.blogs_dao.save_from_dict(serializer.validated_data, blog)
             return respond(200, "Success")
         else:
             return respond(400, "You dont have permission")
@@ -79,7 +76,6 @@ class BlogsViewSet(ViewSet):
         user = request.user
         body = request.data
         serializer = self.InputSerializer(data=body)
-
         if not serializer.is_valid():
             return respond(400, "Fail", serializer.errors)
         if user.isStudent():
@@ -92,7 +88,7 @@ class BlogsViewSet(ViewSet):
         blog.save()
         return respond(200, "Success")
 
-    def destroy(self, request, blob_slug=None):
+    def destroy(self, request, blog_slug=None):
         user = request.user
         blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
         if not blog:

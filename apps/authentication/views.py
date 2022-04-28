@@ -9,12 +9,30 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from Excelegal.helpers import respond
+from .helpers import GoogleOAuthApi, GoogleConnectError, create_user, MagicLink, Email
 from .models import User
 from .serializers import UserSerializer
-from .utils import GoogleOAuthApi, GoogleConnectError, create_user
 
 
-class AdminLoginView(APIView):
+class SendEmail():
+    def send_verification_email(self, user):
+        magic_link = MagicLink(user)
+        magic_link = magic_link.create_magic_link(link_type="email-verify")
+        email = Email(to=[user.email], subject="Email Verification")
+        email.CONTENT = f"<strong>Click on this link to verify your email:</strong> {magic_link}"
+        status = email.send_email()
+        return status
+
+    def send_forgot_password_email(self, user):
+        magic_link = MagicLink(user)
+        magic_link = magic_link.create_magic_link(link_type="forgot-password")
+        email = Email(to=[user.email], subject="Forgot Password")
+        email.CONTENT = f"<strong>Click on this link to create a new password:</strong> {magic_link}"
+        status = email.send_email()
+        return status
+
+
+class AdminLoginView(APIView, SendEmail):
     def post(self, request, format=None):
         body = request.data
         if ("email" not in body) or ("password" not in body):
@@ -24,68 +42,102 @@ class AdminLoginView(APIView):
         user = User.objects.filter(email=email).first()
         if not user:
             return respond(200, "No user with provided email")
-        else:
-            if user.role < user.STAFF:
-                return respond(200, "You dont have permission to login")
-            if user.check_password(password):
-                refresh = RefreshToken.for_user(user)
-                user.last_login = timezone.now()
-                user.save()
-                return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
+        if user.role < user.STAFF:
+            return respond(200, "You dont have permission to login")
+
+        if not user.is_email_verified:
+            status = self.send_verification_email(user=user)
+            if status:
+                return respond(200, "Please Verify your email")
             else:
-                return respond(200, "Email or Password incorrect")
+                return respond(400, "Error in sending email")
+
+        if user.check_password(password):
+            refresh = RefreshToken.for_user(user)
+            user.last_login = timezone.now()
+            user.save()
+            return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
+        else:
+            return respond(401, "Email or Password incorrect")
 
 
-class UserSignupView(APIView):
+class UserSignupView(APIView, SendEmail):
     def post(self, request, format=None):
         body = request.data
         email_already = User.objects.filter(email=body.get('email')).first()
         if email_already:
-            return respond(400, "Email already registered")
+            if email_already.is_email_verified is False:
+                status = self.send_verification_email(user=email_already)
+                if status:
+                    return respond(200, "Verify your email")
+                else:
+                    return respond(400, "Error in sending email")
+            else:
+                return respond(400, "Email already registered")
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return respond(200, "Success")
+            user = serializer.save()
+            # Email verification
+            status = self.send_verification_email(user)
+            if status:
+                return respond(200, "Verify your email")
+            else:
+                return respond(400, "Error in sending email")
         return respond(400, "Error", serializer.errors)
 
 
-class AdminSignupView(APIView):
+class AdminSignupView(APIView, SendEmail):
     def post(self, request, format=None):
         body = request.data
         email_already = User.objects.filter(email=body.get('email')).first()
         if email_already:
-            return respond(400, "Email already registered")
+            if email_already.is_email_verified is False:
+                self.send_verification_email(user=email_already)
+                return respond(200, "Verify your email")
+            else:
+                return respond(400, "Email already registered")
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             user.role = User.STAFF
             user.save()
-            return respond(200, "Success")
+            # Email verification
+            status = self.send_verification_email(user)
+            if status:
+                return respond(200, "Verify your email")
+            else:
+                return respond(400, "Error in sending email")
         return respond(400, "Error", serializer.errors)
 
 
-class UserLoginView(APIView):
+class UserLoginView(APIView, SendEmail):
     def post(self, request, format=None):
         body = request.data
         if ("email" not in body) or ("password" not in body):
-            return respond(200, "Email and Password required")
+            return respond(400, "Email and Password required")
 
         email = body.get('email')
         password = body.get('password')
         user = User.objects.filter(email=email).first()
         if not user:
-            return respond(200, "No user with provided email")
-        else:
-            if user.check_password(password):
-                refresh = RefreshToken.for_user(user)
-                user.last_login = timezone.now()
-                user.save()
-                return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
+            return respond(400, "No user with provided email")
+
+        if not user.is_email_verified:
+            status = self.send_verification_email(user=user)
+            if status:
+                return respond(200, "Please Verify your email")
             else:
-                return respond(200, "Email or Password incorrect")
+                return respond(400, "Error in sending email")
+
+        if user.check_password(password):
+            refresh = RefreshToken.for_user(user)
+            user.last_login = timezone.now()
+            user.save()
+            return respond(200, "Success", {'refresh': str(refresh), 'access': str(refresh.access_token)})
+        else:
+            return respond(401, "Email or Password incorrect")
 
 
-# todo change soon
 class GoogleLoginView(APIView):
     class InputSerializer(serializers.Serializer):
         code = serializers.CharField(required=False)
@@ -161,3 +213,67 @@ class UserInfoView(APIView):
             user.save()
             return respond(200, "Success")
         return respond(400, "Success", serializer.errors)
+
+
+class MagicLinkVerifyView(APIView):
+    def post(self, request):
+        token = request.data.get('token')
+        if not token:
+            return respond(400, "field token required")
+        magic_link = MagicLink()
+        data = magic_link.decode_token(token)
+        token_type = data.get('type')
+        user_id = data.get('user_id')
+        user = User.objects.get(id=user_id)
+
+        if token_type == "email-verify":
+            user.is_email_verified = True
+            user.save()
+            return respond(200, "Email Verified")
+
+        elif token_type == 'forgot-password':
+            try:
+                password = request.data.get('password', "")
+                if not password:
+                    return respond(400, "Password field is required")
+                user.set_password(password)
+                user.save()
+                return respond(200, "Password changed successfully!")
+            except Exception as e:
+                return respond(200, e)
+        else:
+            return respond(400, "BAD TYPE")
+
+
+class ForgotPasswordView(APIView, SendEmail):
+    def post(self, request):
+        body = request.data
+        if "email" not in body:
+            return respond(200, "Email required")
+        email = body.get('email')
+        user = User.objects.filter(email=email).first()
+        if not user.is_email_verified:
+            self.send_verification_email(user=user)
+            return respond(200, "Please Verify your email")
+        status = self.send_forgot_password_email(user)
+        if status:
+            return respond(200, "Email Sent to create new password")
+        return respond(400, "Error in sending email")
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        body = request.data
+        if "password" not in body:
+            return respond(400, "Password Field required")
+        password = body.get("password")
+        try:
+            user.set_password(password)
+            user.save()
+        except Exception as err:
+            print(err)
+            return respond(400, str(err))
+        return respond(200, "Password Changed Successfully")

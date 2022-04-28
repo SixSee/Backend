@@ -9,23 +9,16 @@ class BlogAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'title',
+        'is_live',
+        'is_archived',
         'slug',
-        'text',
         'image',
         'owner',
         'type',
-        'is_live',
-        'is_archived',
         'created_at',
         'updated_at',
     )
-    list_filter = (
-        'owner',
-        'is_live',
-        'is_archived',
-        'created_at',
-        'updated_at',
-    )
+    list_filter = ('is_live', 'is_archived', 'created_at', 'updated_at')
     search_fields = ('slug',)
     date_hierarchy = 'created_at'
 

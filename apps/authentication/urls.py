@@ -3,7 +3,8 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .views import *
+from .views import (UserInfoView, UserSignupView, AdminLoginView, AdminSignupView, UserLoginView, GoogleLoginView,
+                    MagicLinkVerifyView, ForgotPasswordView, ChangePasswordView)
 
 urlpatterns = [
     # Get user info
@@ -15,9 +16,15 @@ urlpatterns = [
     # Login of admin site only
     path('admin/token/', AdminLoginView.as_view(), name='ADMIN_LOGIN'),
     # Admin Signup
-    path('admin/signup/', UserSignupView.as_view(), name='SIGNUP'),
+    path('admin/signup/', AdminSignupView.as_view(), name='SIGNUP'),
     # JWT Token refresh
     path('token/refresh/', TokenRefreshView.as_view(), name='TOKEN_REFRESH'),
     # Google Login Callback
     path('login/google/', GoogleLoginView.as_view(), name='GOOGLE_LOGIN'),
+
+    path('magic-link/', MagicLinkVerifyView.as_view()),
+
+    path('forgot-password/', ForgotPasswordView.as_view()),
+
+    path('change-password/', ChangePasswordView.as_view()),
 ]

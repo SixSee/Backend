@@ -1,11 +1,20 @@
-DEBUG=True
-SECRET="your_secret_key"
-GOOGLE_CLIENT_ID = "google_client_id"
-GOOGLE_CLIENT_SECRET = "google_client_secret"
-CURRENT_ENV = 'development' # if you want to use local database set this variable to 'local'
+DEBUG = True
+SECRET = ""
+GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_SECRET = ""
 
+
+EMAIL_HOST_USER = "testAtest9090@gmail.com"
+EMAIL_HOST_PASSWORD = "ug2T2LGq"
+FRONTEND_URL = "http://localhost:3000/"
+
+# Change this to local if you want to use local db
+CURRENT_ENV = 'development'
+
+# Ignore DB details if you are using local db
 DB_USER = 'postgres'
-DB_NAME = 'postgres'
-DB_PASSWORD = 'postgres'
-DB_HOST = 'localhost'
-DB_PORT = '5432'
+DB_NAME = ''
+DB_PASSWORD = ''
+DB_HOST = ''
+DB_PORT = ''
+

@@ -12,6 +12,7 @@ class Course(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(upload_to=UploadTo('course_images'), validators=[validate_image], blank=True, null=True)
     is_archived = models.BooleanField(default=False)
+    is_live = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -20,6 +21,12 @@ class Course(models.Model):
 
     def get_image_url(self):
         return self.image.url
+
+    def get_avg_rating(self) -> int:
+        ratings = self.reviews.all().values_list('rating')
+        if ratings:
+            return round(sum(ratings) / len(ratings))
+        return 0
 
 
 class Topic(models.Model):

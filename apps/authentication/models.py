@@ -33,7 +33,7 @@ class User(AbstractUser):
         app_label = "authentication"
 
     def __str__(self):
-        return f"User:{self.email}"
+        return f"{self.id}"
 
     def isStudent(self):
         return self.role == 1
@@ -42,4 +42,4 @@ class User(AbstractUser):
         return self.role == 2
 
     def isAdmin(self):
-        return self.role == 3
+        return self.role == 3 or self.is_superuser

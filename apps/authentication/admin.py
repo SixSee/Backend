@@ -7,22 +7,22 @@ from .models import User
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = (
-        'password',
-        'last_login',
-        'is_superuser',
-        'first_name',
-        'last_name',
-        'is_staff',
-        'is_active',
-        'date_joined',
-        'id',
-        'username',
         'email',
         'is_email_verified',
         'from_google',
+        'role',
+        'first_name',
+        'last_name',
+        'id',
+        'password',
+        'last_login',
+        'is_superuser',
+        'is_staff',
+        'is_active',
+        'date_joined',
+        'username',
         'access_token',
         'device_id',
-        'role',
     )
     list_filter = (
         'last_login',
