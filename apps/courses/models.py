@@ -23,8 +23,11 @@ class Course(models.Model):
         return self.image.url
 
     def get_avg_rating(self) -> int:
-        ratings = self.reviews.all().values_list('rating')
+        ratings = list(self.reviews.all().values_list('rating'))
+        ratings = [i[0] for i in ratings]
         if ratings:
+            import pdb
+            pdb.set_trace()
             return round(sum(ratings) / len(ratings))
         return 0
 
