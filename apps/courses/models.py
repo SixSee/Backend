@@ -26,8 +26,6 @@ class Course(models.Model):
         ratings = list(self.reviews.all().values_list('rating'))
         ratings = [i[0] for i in ratings]
         if ratings:
-            import pdb
-            pdb.set_trace()
             return round(sum(ratings) / len(ratings))
         return 0
 
