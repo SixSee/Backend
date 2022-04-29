@@ -8,9 +8,9 @@ from .models import Bulletin
 @receiver(pre_save, sender=Bulletin)
 def set_slug_bulletin(sender, instance, *args, **kwargs):
     if not instance.slug:
-        instance.slug = unique_slug_generator(Blog, instance.title)
+        instance.slug = unique_slug_generator(Bulletin, instance.title)
 
-    prev_instance = Blog.objects.filter(pk=instance.pk).first()
+    prev_instance = Bulletin.objects.filter(pk=instance.pk).first()
 
     if prev_instance and prev_instance.title != instance.title:
-        instance.slug = unique_slug_generator(Blog, instance.title)
+        instance.slug = unique_slug_generator(Bulletin, instance.title)
