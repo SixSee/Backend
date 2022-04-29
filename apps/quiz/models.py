@@ -46,6 +46,9 @@ class QuestionChoice(models.Model):
     choice = models.TextField()
     is_correct = models.IntegerField(default=Status.incorrect, choices=Status.choices)
 
+    class Meta:
+        ordering = ['pk']
+
 
 class Quiz(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -116,5 +119,4 @@ class UserAttemptedQuestion(models.Model):
     user_quiz = models.ForeignKey(UserAttemptedQuiz, on_delete=models.CASCADE, default=None)
 
     def is_choice_correct(self):
-
         return self.question.choices.get(id=self.choice_selected).get_is_correct_display()
