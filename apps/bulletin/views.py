@@ -32,7 +32,7 @@ class BulletinView(APIView):
             bulletin = Bulletin.objects.order_by('-created_at').all()
         elif user.isStaff():
             bulletin = Bulletin.objects.filter(owner=user).order_by('-created_at').all()
-        serializer = self.OutputSerializer(bulletin)
+        serializer = self.OutputSerializer(bulletin, many=True)
         return respond(200, "Success", serializer.data)
 
     def post(self, request):
