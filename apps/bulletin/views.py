@@ -40,7 +40,7 @@ class BulletinView(APIView):
         body = request.data
         if user.role < user.STAFF:
             return respond(400, "Only for Admin and Staff")
-        serializer = self.InputSerializer(body)
+        serializer = self.InputSerializer(data=body)
         if not serializer.is_valid():
             return respond(400, "Failure", serializer.errors)
         bull_obj = Bulletin.objects.create(owner=user, **serializer.validated_data)
@@ -108,7 +108,7 @@ class ApproveBulletinView(APIView):
         if not bulletin:
             return respond(400, "No bulletin with this id")
         if user.isAdmin():
-            bulletin.visible = True
+            bulletin.visible = not bulletin.visible
             bulletin.save()
             return respond(200, "Success")
         else:
