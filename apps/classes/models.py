@@ -12,3 +12,4 @@ class ScheduleClass(models.Model):
     duration = models.IntegerField(verbose_name='Duration in minutes')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
