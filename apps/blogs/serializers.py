@@ -14,7 +14,8 @@ class BlogReviewSerializer(serializers.ModelSerializer):
 
 class BlogsSerializer(serializers.ModelSerializer):
     reviews = BlogReviewSerializer(many=True)
-
+    owner = UserSerializer()
+            
     class Meta:
         model = Blog
         fields = '__all__'
