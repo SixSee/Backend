@@ -32,7 +32,7 @@ class BlogsViewSet(ViewSet):
 
         class Meta:
             model = Blog
-            fields = ("id", "title", "slug", "text", "owner", "type", "reviews")
+            fields = ("id", "title", "image", "slug", "text", "owner", "type", "reviews")
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(required=True, allow_null=False)
