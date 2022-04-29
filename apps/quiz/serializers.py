@@ -113,7 +113,8 @@ class QuizSerializer(serializers.ModelSerializer):
 
     def get_question_ids(self, instance):
         questions = instance.get_list_of_questions()
-        question_objs = [Question.objects.filter(pk=id).first() for id in questions]
+        question_objs = [Question.objects.filter(pk=id).first() for id in questions if
+                         Question.objects.filter(pk=id).exists()]
 
         serializer = NormalQuestionSerializer(question_objs, many=True)
         return serializer.data
@@ -124,7 +125,7 @@ class UserAttemptedQuestionSerializer(serializers.ModelSerializer):
     is_correct = serializers.SerializerMethodField()
     question = serializers.SerializerMethodField()
 
-    class Meta: 
+    class Meta:
         model = UserAttemptedQuestion
         fields = ("question", "choice_selected", "created_at", "is_correct")
 
