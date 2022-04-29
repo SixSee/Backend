@@ -66,8 +66,9 @@ class QuestionViewSet(ViewSet):
         body = request.data
         serializer = self.serializer_class(question, data=body)
         if serializer.is_valid():
-            serializer.save()
-            return respond(200, "Success")
+            question = serializer.save()
+            serializer = self.serializer_class(question)
+            return respond(200, "Success", serializer.data)
         return respond(400, "Fail", serializer.errors)
 
     def destroy(self, request, pk=None):
