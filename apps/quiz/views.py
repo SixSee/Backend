@@ -91,7 +91,7 @@ class QuestionViewSet(ViewSet):
         question = Question.objects.filter(pk=pk).first()
         if not question:
             return respond(400, "No question with this id")
-        question.is_approved = True
+        question.is_approved = not question.is_approved
         question.save()
         return respond(200, "Success")
 
@@ -198,7 +198,7 @@ class QuizViewSet(ViewSet):
         quiz = Quiz.objects.filter(pk=pk).first()
         if not quiz:
             return respond(400, "No quiz with this id")
-        quiz.is_approved = True
+        quiz.is_approved = not quiz.is_approved
         quiz.save()
         return respond(200, "Success")
 
