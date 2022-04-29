@@ -58,7 +58,8 @@ class QuestionSerializer(serializers.ModelSerializer):
         subjects = validated_data.pop('subjects')
         choices_data: dict = validated_data.pop('choices')
         choices = instance.choices.all()
-
+        created_by = validated_data.pop('created_by')
+        validated_data['created_by_id'] = created_by
         for attr, val in validated_data.items():
             setattr(instance, attr, val)
 
