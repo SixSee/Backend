@@ -17,7 +17,7 @@ class BlogsDao(GenericDao):
 class BlogReviewDao(GenericDao):
     model = BlogReview
 
-    def create_review(self, course, review_by, text, rating):
-        review = self.model(course=course, review_by=review_by, text=text, rating=rating)
+    def create_review(self, blog, review_by, text, rating):
+        review = self.model(blog=blog, review_by=review_by, text=text, rating=rating)
         review.save()
         return review

@@ -41,9 +41,9 @@ class AdminLoginView(APIView, SendEmail):
         password = body.get('password')
         user = User.objects.filter(email=email).first()
         if not user:
-            return respond(200, "No user with provided email")
+            return respond(400, "No user with provided email")
         if user.role < user.STAFF:
-            return respond(200, "You dont have permission to login")
+            return respond(400, "You dont have permission to login")
 
         if not user.is_email_verified:
             status = self.send_verification_email(user=user)
@@ -69,7 +69,7 @@ class UserSignupView(APIView, SendEmail):
             if email_already.is_email_verified is False:
                 status = self.send_verification_email(user=email_already)
                 if status:
-                    return respond(200, "Verify your email")
+                    return respond(400, "Verify your email")
                 else:
                     return respond(400, "Error in sending email")
             else:
@@ -125,7 +125,7 @@ class UserLoginView(APIView, SendEmail):
         if not user.is_email_verified:
             status = self.send_verification_email(user=user)
             if status:
-                return respond(200, "Please Verify your email")
+                return respond(400, "Please Verify your email")
             else:
                 return respond(400, "Error in sending email")
 
@@ -252,6 +252,8 @@ class ForgotPasswordView(APIView, SendEmail):
             return respond(200, "Email required")
         email = body.get('email')
         user = User.objects.filter(email=email).first()
+        if not user:
+            return respond(400, "No user with this email")
         if not user.is_email_verified:
             self.send_verification_email(user=user)
             return respond(200, "Please Verify your email")
