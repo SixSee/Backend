@@ -1,14 +1,16 @@
 from django.utils import timezone
+from ebooklib import epub
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
-
+from Excelegal.settings import MEDIA_ROOT
+from django.http import HttpResponse, HttpResponseNotFound
 import apps.courses.models
 from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
 from apps.authentication.serializers import UserSerializer
-from .helpers import get_latest_courses
+from .helpers import get_latest_courses, style as style2
 from .models import Course, Topic, CourseReview
 from .serializers import CourseReviewSerializer
 
@@ -256,3 +258,46 @@ class LatestCoursesView(APIView):
     def get(self, request):
         serializer = self.OutputSerializer(get_latest_courses(), many=True)
         return respond(200, "Success", serializer.data)
+
+
+class CourseEPUBView(APIView):
+
+    def get(self, request, course_slug=None):
+        course = dao_handler.course_dao.get_by_slug(course_slug)
+        if not course:
+            return respond(400, "No course with this slug")
+        topics = course.topics.order_by('index').all()
+        book = epub.EpubBook()
+        book.set_title(course.title)
+        style = '''BODY { text-align: justify;}'''
+
+        default_css = epub.EpubItem(uid="style_default", file_name="style/default.css", media_type="text/css",
+                                    content=style)
+        book.add_item(default_css)
+        chapters = []
+        for topic in topics:
+            # create chapter
+            c = epub.EpubHtml(title=topic.title, file_name=f"{topic.slug}.xhtml", lang='hr')
+            c.content = topic.text
+            book.add_item(c)
+            chapters.append(c)
+        book.toc = tuple(chapters)
+        # add default NCX and Nav file
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+        nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style2)
+        book.add_item(nav_css)
+
+        spine = chapters
+        book.spine = spine
+        epub_location = f"./Excelegal/media/epub_courses/{course.slug}.epub"
+        epub.write_epub(epub_location, book, {})
+        try:
+            with open(epub_location, "rb") as file:
+                data = file.read()
+            response = HttpResponse(data)
+            response['Content-Disposition'] = f'attachment; filename="{course.slug}.epub"'
+        except IOError:
+            response = HttpResponseNotFound('<h1>File not exist</h1>')
+        return response
+

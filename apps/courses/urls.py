@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework_nested import routers
 
-from .views import (CourseViewSet, CourseTopicViewSet, CourseReviewView, LatestCoursesView)
+from .views import (CourseViewSet, CourseTopicViewSet, CourseReviewView, LatestCoursesView, CourseEPUBView)
 
 router = routers.SimpleRouter()
 router.register(r'course', CourseViewSet, basename='course')
@@ -13,4 +13,5 @@ urlpatterns = [
     path(r'', include(router.urls)),
     path(r'', include(topic_router.urls)),
     path('course/review/<course_slug>', CourseReviewView.as_view()),
+    path('course/epub/<course_slug>', CourseEPUBView.as_view())
 ]
