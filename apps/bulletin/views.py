@@ -65,7 +65,7 @@ class BulletinView(APIView):
         dao_handler.bulletin_dao.save_from_dict(serializer.validated_data, bulletin)
         return respond(200, "Success")
 
-    def destroy(self, request):
+    def delete(self, request):
         user = request.user
         body = request.data
         body = body.copy()
