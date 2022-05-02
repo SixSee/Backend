@@ -1,11 +1,11 @@
+from django.http import HttpResponse, HttpResponseNotFound
 from django.utils import timezone
 from ebooklib import epub
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
-from Excelegal.settings import MEDIA_ROOT
-from django.http import HttpResponse, HttpResponseNotFound
+
 import apps.courses.models
 from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
@@ -266,6 +266,8 @@ class CourseEPUBView(APIView):
         if not course:
             return respond(400, "No course with this slug")
         topics = course.topics.order_by('index').all()
+        if topics.count() == 0:
+            return respond(400, "No topics")
         book = epub.EpubBook()
         book.set_title(course.title)
         style = '''BODY { text-align: justify;}'''

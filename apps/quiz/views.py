@@ -374,5 +374,5 @@ class QuizIsRunningView(APIView):
         user = request.user
         user_quiz = UserAttemptedQuiz.objects.filter(user=user, completed_at=None).first()
         if user_quiz:
-            return respond(400, "Quiz Already Runnning... ")
+            return respond(400, "Quiz Already Runnning... Complete running quiz ")
         return respond(200, "Success")
