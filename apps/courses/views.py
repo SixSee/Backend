@@ -35,7 +35,6 @@ class CourseViewSet(ViewSet):
 
     def list(self, request):
         user = request.user
-        # todo-> seperate apis for getting courses for main site or admin panel?
         if not user.is_anonymous and user.isAdmin():
             courses = Course.objects.order_by('id').all()
         else:
