@@ -127,7 +127,7 @@ class QuizViewSet(ViewSet):
     def handle_subjects(self, quiz_obj, subjects):
         subjects_list = []
         for subject in subjects:
-            sub = Subjects.objects.get(name=subject.get('name'))
+            sub = Subjects.objects.get(name__startswith=subject.get('name'))
             subjects_list.append(sub)
         quiz_obj.subjects.set(subjects_list)
         return quiz_obj
