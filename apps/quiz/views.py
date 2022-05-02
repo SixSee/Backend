@@ -332,6 +332,7 @@ class UserCompleteQuiz(APIView):
         user = UserSerializer()
         attempts = serializers.SerializerMethodField()
         user_quiz_id = serializers.SerializerMethodField()
+
         class Meta:
             model = UserAttemptedQuiz
             fields = ("user_quiz_id", "user", "started_at",
@@ -372,7 +373,94 @@ class QuizIsRunningView(APIView):
 
     def get(self, request):
         user = request.user
-        user_quiz = UserAttemptedQuiz.objects.filter(user=user, completed_at=None).first()
+        user_quiz = UserAttemptedQuiz.objects.filter(user=user, completed_at__isnull=True).first()
         if user_quiz:
             return respond(400, "Quiz Already Runnning... Complete running quiz ")
         return respond(200, "Success")
+
+
+class RunningQuizStatus(APIView):
+    permission_classes = [IsAuthenticated]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        no_of_attempted_questions = serializers.SerializerMethodField()
+        user = UserSerializer()
+        attempts = serializers.SerializerMethodField()
+        user_quiz_id = serializers.SerializerMethodField()
+
+        class Meta:
+            model = UserAttemptedQuiz
+            fields = ("user_quiz_id", "user", "started_at",
+                      "completed_at", "no_of_attempted_questions",
+                      "attempts")
+
+        def get_user_quiz_id(self, instance):
+            return instance.id
+
+        def get_no_of_attempted_questions(self, instance):
+            return instance.no_of_attempted_questions()
+
+        def get_attempts(self, instance):
+            attempted_question_ids = instance.get_list_of_attempted_questions()
+            attempted_question_objs = [UserAttemptedQuestion.objects.get(pk=pk)
+                                       for pk in attempted_question_ids]
+            serializer = UserAttemptedQuestionSerializer(attempted_question_objs, many=True)
+            return serializer.data
+
+    def get(self, request, pk=None):
+        user = request.user
+        quiz = Quiz.objects.filter(pk=pk).first()
+        if not quiz:
+            return respond(400, "No quiz found with this id")
+
+        user_quiz = quiz.userattemptedquiz_set.filter(user=user, quiz=quiz).first()
+        if not user_quiz:
+            return respond(400, "Quiz not started")
+        if not UserAttemptedQuiz.objects.filter(quiz=quiz, user=user, completed_at=None).exists():
+            return respond(400, "Quiz is completed")
+
+        serializer = self.OutputSerializer(user_quiz)
+        return respond(200, "Success", serializer.data)
+
+
+class GetListAttemptedQuizzes(APIView):
+    permission_classes = [IsAuthenticated]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        no_of_attempted_questions = serializers.SerializerMethodField()
+        user = UserSerializer()
+        attempts = serializers.SerializerMethodField()
+        user_quiz_id = serializers.SerializerMethodField()
+        quiz_id = serializers.SerializerMethodField()
+        quiz_name = serializers.SerializerMethodField()
+
+        class Meta:
+            model = UserAttemptedQuiz
+            fields = ("user_quiz_id", "user", "started_at",
+                      "completed_at", "no_of_attempted_questions",
+                      "attempts", 'quiz_id', 'quiz_name')
+
+        def get_quiz_id(self, instance):
+            return instance.quiz.id
+
+        def get_quiz_name(self, instance):
+            return instance.quiz.name
+
+        def get_user_quiz_id(self, instance):
+            return instance.id
+
+        def get_no_of_attempted_questions(self, instance):
+            return instance.no_of_attempted_questions()
+
+        def get_attempts(self, instance):
+            attempted_question_ids = instance.get_list_of_attempted_questions()
+            attempted_question_objs = [UserAttemptedQuestion.objects.get(pk=pk)
+                                       for pk in attempted_question_ids]
+            serializer = UserAttemptedQuestionSerializer(attempted_question_objs, many=True)
+            return serializer.data
+
+    def get(self, request):
+        user = request.user
+        user_quizzes = UserAttemptedQuiz.objects.filter(user=user, completed_at__isnull=False).all()
+        serializer = self.OutputSerializer(user_quizzes, many=True)
+        return respond(200, "Success", serializer.data)
