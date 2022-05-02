@@ -11,7 +11,6 @@ def get_random_questions_for_quiz(quiz_obj: Quiz):
                       .distinct()
                       .all())
     Flag = 0
-    # import ipdb; ipdb.set_trace()
     for question in dirty_question:
         subjects = question.subjects.values_list('id').all()
         for sub in subjects:

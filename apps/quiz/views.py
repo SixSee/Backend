@@ -365,3 +365,14 @@ class UserCompleteQuiz(APIView):
         user_quiz.save()
         serializer = self.OutputSerializer(user_quiz)
         return respond(200, "Success", serializer.data)
+
+
+class QuizIsRunningView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        user_quiz = UserAttemptedQuiz.objects.filter(user=user, completed_at=None).first()
+        if user_quiz:
+            return respond(400, "Quiz Already Runnning... ")
+        return respond(200, "Success")
