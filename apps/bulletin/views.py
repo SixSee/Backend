@@ -49,7 +49,7 @@ class BulletinView(APIView):
     def put(self, request):
         user = request.user
         body: dict = request.data
-
+        body = body.copy()
         slug = body.pop('slug')
         bulletin = Bulletin.objects.filter(slug=slug).first()
         if not bulletin:
@@ -67,6 +67,8 @@ class BulletinView(APIView):
 
     def destroy(self, request):
         user = request.user
+        body = request.data
+        body = body.copy()
         slug = body.pop('slug')
 
         bulletin = Bulletin.objects.filter(slug=slug).first()
