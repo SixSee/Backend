@@ -138,7 +138,7 @@ class QuizViewSet(ViewSet):
             return respond(400, "Only for admin users")
 
         if user.isStaff():
-            quiz = Quiz.objects.filter(created_by=user).all()
+            quiz = Quiz.objects.filter(owner=user).all()
         quiz = Quiz.objects.all()
 
         serializer = ListQuizSerializer(quiz, many=True)
