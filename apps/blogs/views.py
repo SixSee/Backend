@@ -62,15 +62,12 @@ class BlogsViewSet(ViewSet):
         if not blog:
             return respond(400, "No blog with this slug")
 
-        if blog.owner == user or user.isAdmin():
-            serializer = self.InputSerializer(data=body)
-            if not serializer.is_valid():
-                return respond(200, "Fail", serializer.errors)
-            serializer.validated_data['owner'] = user
-            dao_handler.blogs_dao.save_from_dict(serializer.validated_data, blog)
-            return respond(200, "Success")
-        else:
-            return respond(400, "You dont have permission")
+        serializer = self.InputSerializer(data=body)
+        if not serializer.is_valid():
+            return respond(200, "Fail", serializer.errors)
+        serializer.validated_data['owner'] = user
+        dao_handler.blogs_dao.save_from_dict(serializer.validated_data, blog)
+        return respond(200, "Success")
 
     def create(self, request):
         user = request.user
@@ -93,11 +90,8 @@ class BlogsViewSet(ViewSet):
         blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
         if not blog:
             return respond(400, "No blog with this slug")
-        if blog.owner == user or user.isAdmin():
-            blog.delete()
-            return respond(200, "Success")
-        else:
-            return respond(400, "You dont have permission")
+        blog.delete()
+        return respond(200, "Success")
 
 
 class BlogReviewView(APIView):

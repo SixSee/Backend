@@ -67,14 +67,11 @@ class CourseViewSet(ViewSet):
         if not course:
             return respond(400, "No course with this slug")
 
-        if course.owner == user or user.isAdmin():
-            serializer = self.InputSerializer(data=body)
-            if not serializer.is_valid():
-                return respond(200, "Fail", serializer.errors)
-            dao_handler.course_dao.save_from_dict(serializer.validated_data, course)
-            return respond(200, "Success")
-        else:
-            return respond(400, "You dont have permission")
+        serializer = self.InputSerializer(data=body)
+        if not serializer.is_valid():
+            return respond(200, "Fail", serializer.errors)
+        dao_handler.course_dao.save_from_dict(serializer.validated_data, course)
+        return respond(200, "Success")
 
     def destroy(self, request, slug=None):
         course = Course.objects.filter(slug=slug).first()
@@ -83,11 +80,8 @@ class CourseViewSet(ViewSet):
         if not course:
             return respond(400, "No course with this slug")
 
-        if course.owner == user or user.isAdmin():
-            course.delete()
-            return respond(200, "Success")
-        else:
-            return respond(400, "You dont have permission")
+        course.delete()
+        return respond(200, "Success")
 
 
 class CourseTopicViewSet(ViewSet):
@@ -156,30 +150,24 @@ class CourseTopicViewSet(ViewSet):
         if not serializer.is_valid():
             return respond(200, "Failure", serializer.errors)
 
-        if topic.course.owner is user or user.isAdmin():
-            # Check if index does not exists previously
-            index = serializer.validated_data.get('index')
-            topic_index_exists = (Topic.objects.
-                                  filter(course__slug=course_slug, index=index)
-                                  .exists())
-            if topic_index_exists:
-                # shift down other topics
-                dao_handler.topic_dao.shift_topics_down(index, topic.course)
-            dao_handler.topic_dao.save_from_dict(serializer.validated_data, topic)
-            return respond(200, "Success")
-        else:
-            return respond(400, "You dont have permission")
+        # Check if index does not exists previously
+        index = serializer.validated_data.get('index')
+        topic_index_exists = (Topic.objects.
+                              filter(course__slug=course_slug, index=index)
+                              .exists())
+        if topic_index_exists:
+            # shift down other topics
+            dao_handler.topic_dao.shift_topics_down(index, topic.course)
+        dao_handler.topic_dao.save_from_dict(serializer.validated_data, topic)
+        return respond(200, "Success")
 
     def destroy(self, request, course_slug=None, topic_slug=None):
         user = request.user
         topic = Topic.objects.filter(slug=topic_slug, course__slug=course_slug).first()
         if not topic:
             return respond(200, "No topic with this slug")
-        if topic.course.owner == user or user.isAdmin():
-            topic.delete()
-            return respond(200, "Success")
-        else:
-            return respond(400, "You dont have permission")
+        topic.delete()
+        return respond(200, "Success")
 
 
 class CourseReviewView(APIView):
@@ -278,6 +266,8 @@ class CourseEPUBView(APIView):
         chapters = []
         for topic in topics:
             # create chapter
+            if topic.text == "":
+                continue
             c = epub.EpubHtml(title=topic.title, file_name=f"{topic.slug}.xhtml", lang='hr')
             c.content = topic.text
             book.add_item(c)
