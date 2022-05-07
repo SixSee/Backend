@@ -6,7 +6,7 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
-from .settings import DEBUG, MEDIA_URL, MEDIA_ROOT
+from .settings import MEDIA_URL, MEDIA_ROOT, STATIC_ROOT, STATIC_URL
 
 
 def home(request):
@@ -41,3 +41,4 @@ urlpatterns += [
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
 urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)
+urlpatterns += static(STATIC_URL, document_root=STATIC_ROOT)
