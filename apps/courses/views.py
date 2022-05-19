@@ -2,6 +2,7 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.utils import timezone
 from ebooklib import epub
 from rest_framework import serializers
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
@@ -83,6 +84,18 @@ class CourseViewSet(ViewSet):
         course.delete()
         return respond(200, "Success")
 
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve_question(self, request, slug=None):
+        user = request.user
+        if not user.isAdmin():
+            return respond(400, "Only for admin users")
+
+        course = Course.objects.filter(slug=slug).first()
+        if not course:
+            return respond(400, "No course with this slug")
+        course.is_approved = not course.is_approved
+        question.save()
+        return respond(200, "Success")
 
 class CourseTopicViewSet(ViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
