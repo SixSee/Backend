@@ -185,9 +185,10 @@ AUTHENTICATION_BACKENDS = [
 
 # CORS setup
 CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = ['http://52.66.248.153:5000','https://api.excelegal.wantguns.dev',
-                        'http://0.0.0.0:8000' , 'http://52.66.248.153:5000/',
-                        'http://ec2-52-66-248-153.ap-south-1.compute.amazonaws.com:5000/']
+CSRF_TRUSTED_ORIGINS = ['http://52.66.248.153:5000', 'https://api.excelegal.wantguns.dev',
+                        'http://0.0.0.0:8000', 'http://52.66.248.153:5000/',
+                        'http://ec2-52-66-248-153.ap-south-1.compute.amazonaws.com:5000/',
+                        'https://api.excelegal.in']
 CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET
 LOGIN_URL = "/admin/login/"
 SWAGGER_SETTINGS = {

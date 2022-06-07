@@ -9,6 +9,7 @@ style = '''
 @namespace epub "http://www.idpf.org/2007/ops";
 body {
     font-family: Cambria, Liberation Serif, Bitstream Vera Serif, Georgia, Times, Times New Roman, serif;
+    text-align: justify;
 }
 h2 {
      text-align: left;
