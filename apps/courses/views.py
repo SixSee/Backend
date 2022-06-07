@@ -282,7 +282,7 @@ class CourseEPUBView(APIView):
             if topic.text == "":
                 continue
             c = epub.EpubHtml(title=topic.title, file_name=f"{topic.slug}.xhtml", lang='hr')
-            c.content = topic.text
+            c.content = f"<h1>{topic['title']}</h1>" + topic['text']
             book.add_item(c)
             chapters.append(c)
         book.toc = tuple(chapters)
