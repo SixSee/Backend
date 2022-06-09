@@ -121,6 +121,9 @@ class BlogReviewView(APIView):
         blog = dao_handler.blogs_dao.get_by_slug(blog_slug)
         if not blog:
             return respond(200, "No blog with this slug")
+        reviewAlready = BlogReview.objects.filter(blog=blog, review_by=user).first()
+        if reviewAlready:
+            return respond(400, "Only one review allowed per user")
 
         serializer = self.InputSerializer(data=body)
         if not serializer.is_valid():
