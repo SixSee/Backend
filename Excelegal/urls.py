@@ -1,3 +1,4 @@
+import django.http
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.http import HttpResponse
@@ -9,9 +10,9 @@ from rest_framework.permissions import AllowAny
 from .settings import MEDIA_URL, MEDIA_ROOT, STATIC_ROOT, STATIC_URL
 
 
-def home(request):
+def home(request: django.http.HttpRequest):
     return HttpResponse(
-        f"Api server running. <a href='{request.scheme}://{request.META['HTTP_HOST']}{request.path}swagger'>Swagger here!</a>")
+        f"Api server running. <a href='{request.scheme}://{request.META['SERVER_NAME']}:{request.META['SERVER_PORT']}{request.path}swagger'>Swagger here!</a>")
 
 
 schema_view = get_schema_view(
@@ -32,6 +33,7 @@ urlpatterns = [
     path('quiz/', include('apps.quiz.urls')),
     path('bulletin/', include('apps.bulletin.urls')),
     path('classes/', include('apps.classes.urls')),
+    path('internship/', include('apps.internship.urls')),
     path('', home, name="HOME")
 ]
 
