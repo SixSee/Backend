@@ -14,6 +14,7 @@ from apps.authentication.serializers import UserSerializer
 from .helpers import get_latest_courses, style as style2
 from .models import Course, Topic, CourseReview
 from .serializers import CourseReviewSerializer
+from .. import courses
 
 
 class CourseViewSet(ViewSet):
@@ -210,6 +211,9 @@ class CourseReviewView(APIView):
 
         if not course:
             return respond(200, "No course with this slug")
+        reviewAlready = CourseReview.objects.filter(course=course, review_by=user).first()
+        if reviewAlready:
+            return respond(400, "Only one review allowed per user")
         serializer = self.InputSerializer(data=body)
         if not serializer.is_valid():
             return respond(400, "Fail", serializer.errors)
