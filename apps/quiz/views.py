@@ -160,8 +160,8 @@ class QuizViewSet(ViewSet):
     def create(self, request):
 
         user = request.user
-        if not user.isAdmin():
-            return respond(400, "Only for admin users")
+        if not (user.is_superuser or (user.role >= user.STAFF)):
+            return respond(400, "Only for admin or staff users")
 
         body = request.data
         serializer = self.InputSerializer(data=body)
