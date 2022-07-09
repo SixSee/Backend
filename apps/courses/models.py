@@ -36,7 +36,7 @@ class Topic(models.Model):
     slug = models.CharField(max_length=319, blank=True, null=True)
     index = models.CharField(max_length=100, default="0", blank=True, null=True)
     text = models.TextField()
-    footnote = models.TextField(default="")
+    footnote = models.TextField(default="", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
