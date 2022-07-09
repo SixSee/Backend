@@ -104,7 +104,7 @@ class CourseTopicViewSet(ViewSet):
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True)
-        index = serializers.IntegerField(required=True)
+        index = serializers.CharField(required=True)
         text = serializers.CharField(required=True)
 
     class OutputSerializer(serializers.ModelSerializer):
@@ -139,14 +139,14 @@ class CourseTopicViewSet(ViewSet):
             return respond(200, "Failure", serializer.errors)
 
         if course.owner == user or user.isAdmin():
-            # Check if index does not exists previously
-            index = serializer.validated_data.get('index')
-            topic_index_exists = (Topic.objects
-                                  .filter(course__slug=course_slug, index=index)
-                                  .exists())
-            if topic_index_exists:
-                # shift down other topics
-                dao_handler.topic_dao.shift_topics_down(index, course)
+            # # Check if index does not exists previously
+            # index = serializer.validated_data.get('index')
+            # topic_index_exists = (Topic.objects
+            #                       .filter(course__slug=course_slug, index=index)
+            #                       .exists())
+            # if topic_index_exists:
+            #     # shift down other topics
+            #     dao_handler.topic_dao.shift_topics_down(index, course)
 
             topic = dao_handler.topic_dao.create_topic(course=course, **serializer.validated_data)
             return respond(200, "Success")
@@ -165,13 +165,13 @@ class CourseTopicViewSet(ViewSet):
             return respond(200, "Failure", serializer.errors)
 
         # Check if index does not exists previously
-        index = serializer.validated_data.get('index')
-        topic_index_exists = (Topic.objects.
-                              filter(course__slug=course_slug, index=index)
-                              .exists())
-        if topic_index_exists:
-            # shift down other topics
-            dao_handler.topic_dao.shift_topics_down(index, topic.course)
+        # index = serializer.validated_data.get('index')
+        # topic_index_exists = (Topic.objects.
+        #                       filter(course__slug=course_slug, index=index)
+        #                       .exists())
+        # if topic_index_exists:
+        #     # shift down other topics
+        #     dao_handler.topic_dao.shift_topics_down(index, topic.course)
         dao_handler.topic_dao.save_from_dict(serializer.validated_data, topic)
         return respond(200, "Success")
 

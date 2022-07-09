@@ -7,7 +7,7 @@ from .models import Topic, CourseReview
 class TopicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Topic
-        fields = ['id', 'title', 'slug', 'index', 'text']
+        fields = ['id', 'title', 'slug', 'index', 'text', 'footnote']
         extra_kwargs = {
             'id': {'read_only': True},
         }
