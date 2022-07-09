@@ -15,6 +15,8 @@ from .helpers import get_latest_courses, style as style2
 from .models import Course, Topic, CourseReview
 from .serializers import CourseReviewSerializer
 from .. import courses
+from django.db.models import IntegerField
+from django.db.models.functions import Cast
 
 
 class CourseViewSet(ViewSet):
@@ -98,6 +100,7 @@ class CourseViewSet(ViewSet):
         question.save()
         return respond(200, "Success")
 
+
 class CourseTopicViewSet(ViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     lookup_field = 'topic_slug'
@@ -114,7 +117,9 @@ class CourseTopicViewSet(ViewSet):
 
     def list(self, request, course_slug=None):
         user = request.user
-        topics = Topic.objects.filter(course__slug=course_slug, course__is_archived=False).order_by('index')
+        topics = Topic.objects.filter(course__slug=course_slug, course__is_archived=False).annotate(
+            index_int=Cast('index', IntegerField())
+        ).order_by('index_int')
         serializer = self.OutputSerializer(topics, many=True)
         return respond(200, "Success", serializer.data)
 
@@ -308,4 +313,3 @@ class CourseEPUBView(APIView):
         except IOError:
             response = HttpResponseNotFound('<h1>File not exist</h1>')
         return response
-
