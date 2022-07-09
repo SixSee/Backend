@@ -34,8 +34,9 @@ class Topic(models.Model):
     course = models.ForeignKey(Course, related_name='topics', on_delete=models.CASCADE)
     title = models.CharField(max_length=255, blank=True, null=True)
     slug = models.CharField(max_length=319, blank=True, null=True)
-    index = models.IntegerField(default=0, blank=True, null=True)
+    index = models.CharField(max_length=100, default="0", blank=True, null=True)
     text = models.TextField()
+    footnote = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
