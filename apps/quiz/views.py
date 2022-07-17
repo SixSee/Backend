@@ -284,10 +284,11 @@ class UserQuizQuestionsView(APIView):
         if not quiz:
             return respond(400, "No quiz found with this id")
         user_quiz = UserAttemptedQuiz.objects.filter(user=user, quiz=quiz)
-        if not user_quiz.exists():
-            return respond(400, "Start Quiz before viewing all questions")
-        user_quiz = user_quiz.first()
-        quiz_question_ids = user_quiz.quiz.get_list_of_questions()
+        # if not user_quiz.exists():
+        #     return respond(400, "Start Quiz before viewing all questions")
+        # user_quiz = user_quiz.first()
+        # quiz_question_ids = user_quiz.quiz.get_list_of_questions()
+        quiz_question_ids = quiz.get_list_of_questions()
         quiz_question_objs = [Question.objects.filter(pk=pk).first() for pk in quiz_question_ids]
         serializer = self.OutputSerializer(quiz_question_objs, many=True)
         return respond(200, "Success", serializer.data)
