@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
@@ -28,6 +28,7 @@ class QuestionViewSet(ViewSet):
             questions = Question.objects.filter(created_by=user).all()
         else:
             questions = Question.objects.all()
+
         serializer = self.serializer_class(questions, many=True)
         return respond(200, "Success", serializer.data)
 
@@ -218,8 +219,21 @@ class QuizViewSet(ViewSet):
 
 
 class LatestQuizzesView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
-        quiz = Quiz.objects.filter(is_approved=True, is_completed=False).order_by('created_at', 'updated_at').all()
+        user = request.user
+        attempted = request.GET.get('unattempted', 0)
+        if not user.is_anonymous and attempted:
+            user_quizzes = UserAttemptedQuiz.objects.filter(user=user, completed_at__isnull=False).values_list(
+                'quiz_id').all()
+            user_quizzes = [i[0] for i in list(user_quizzes)]
+            quiz = (Quiz.objects
+                    .filter(is_approved=True, is_completed=False)
+                    .order_by('created_at', 'updated_at')
+                    .exclude(id__in=user_quizzes).all())
+        else:
+            quiz = Quiz.objects.filter(is_approved=True, is_completed=False).order_by('created_at', 'updated_at').all()
         serializer = QuizSerializer(quiz, many=True)
         return respond(200, "Success", serializer.data)
 
