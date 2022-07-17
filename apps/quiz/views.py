@@ -18,17 +18,21 @@ from .serializers import (QuestionSerializer, SubjectsSerializer, ListQuizSerial
 class QuestionViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = QuestionSerializer
+    page_size = 15
 
     def list(self, request):
         user = request.user
+        page_number = int(request.GET.get('page_number', 1))
+        limit = self.page_size
+        offset = (page_number - 1) * self.page_size
+
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(200, "Only for admin or staff users")
 
         if user.isStaff():
-            questions = Question.objects.filter(created_by=user).all()
+            questions = Question.objects.filter(created_by=user).all()[offset:offset + limit]
         else:
-            questions = Question.objects.all()
-
+            questions = Question.objects.all()[offset:offset + limit]
         serializer = self.serializer_class(questions, many=True)
         return respond(200, "Success", serializer.data)
 
@@ -118,6 +122,7 @@ class ListSubjectsView(APIView):
 
 class QuizViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
+    page_size = 15
 
     class InputSerializer(serializers.Serializer):
         name = serializers.CharField(required=True)
@@ -135,12 +140,15 @@ class QuizViewSet(ViewSet):
 
     def list(self, request):
         user = request.user
+        page_number = int(request.GET.get('page_number', 1))
+        limit = self.page_size
+        offset = (page_number - 1) * self.page_size
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(400, "Only for admin users")
 
+        quiz = Quiz.objects.all()[offset:offset + limit]
         if user.isStaff():
-            quiz = Quiz.objects.filter(owner=user).all()
-        quiz = Quiz.objects.all()
+            quiz = Quiz.objects.filter(owner=user).all()[offset:offset + limit]
 
         serializer = ListQuizSerializer(quiz, many=True)
 
