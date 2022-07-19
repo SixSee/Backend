@@ -3,9 +3,9 @@ from datetime import timedelta
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
-from rest_framework.viewsets import ViewSet
+from rest_framework.viewsets import ViewSet, ModelViewSet
 
 from Excelegal.helpers import respond
 from apps.authentication.serializers import UserSerializer
@@ -14,24 +14,57 @@ from .models import Subjects, Question, Quiz, UserAttemptedQuiz, UserAttemptedQu
 from .serializers import (QuestionSerializer, SubjectsSerializer, ListQuizSerializer, QuizSerializer,
                           QuestionChoiceSerializer_wo_correct, UserAttemptedQuestionSerializer)
 
+from rest_framework import pagination
+from django.db.models import Q
 
-class QuestionViewSet(ViewSet):
+
+class StandardResultsPagination(pagination.PageNumberPagination):
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+
+class QuestionViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = QuestionSerializer
+    page_size = 15
 
-    def list(self, request):
-        user = request.user
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        query = self.request.GET.get('q', None)
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(200, "Only for admin or staff users")
 
         if user.isStaff():
-            questions = Question.objects.filter(created_by=user).all()
+            qs = Question.objects.filter(created_by=user).all()
         else:
-            questions = Question.objects.all()
-        serializer = self.serializer_class(questions, many=True)
-        return respond(200, "Success", serializer.data)
+            qs = Question.objects.order_by('is_approved').all()
 
-    def retrieve(self, request, pk=None):
+        if query is not None:
+            qs = qs.filter(
+                Q(name__icontains=query)
+            )
+        return qs
+
+    # def list(self, request, **kwargs):
+    #     user = request.user
+    #     page_number = int(request.GET.get('page_number', 1))
+    #     limit = self.page_size
+    #     offset = (page_number - 1) * self.page_size
+    # 
+    #     if not (user.is_superuser or (user.role >= user.STAFF)):
+    #         return respond(200, "Only for admin or staff users")
+    # 
+    #     if user.isStaff():
+    #         questions = Question.objects.filter(created_by=user).all()[offset:offset + limit]
+    #     else:
+    #         questions = Question.objects.all()[offset:offset + limit]
+    #     serializer = self.serializer_class(questions, many=True)
+    #     return respond(200, "Success", serializer.data)
+
+    def retrieve(self, request, pk=None, **kwargs):
         user = request.user
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(200, "Only for admin or staff users")
@@ -42,7 +75,7 @@ class QuestionViewSet(ViewSet):
         serializer = self.serializer_class(question)
         return respond(200, "Success", serializer.data)
 
-    def create(self, request):
+    def create(self, request, **kwargs):
         user = request.user
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(200, "Only for admin or staff users")
@@ -54,7 +87,7 @@ class QuestionViewSet(ViewSet):
             return respond(200, "Success")
         return respond(400, "Fail", serializer.errors)
 
-    def update(self, request, pk=None):
+    def update(self, request, pk=None, **kwargs):
         user = request.user
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(200, "Only for admin users")
@@ -71,7 +104,7 @@ class QuestionViewSet(ViewSet):
             return respond(200, "Success", serializer.data)
         return respond(400, "Fail", serializer.errors)
 
-    def destroy(self, request, pk=None):
+    def destroy(self, request, pk=None, **kwargs):
         user = request.user
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(400, "Only for admin users")
@@ -117,6 +150,7 @@ class ListSubjectsView(APIView):
 
 class QuizViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
+    page_size = 15
 
     class InputSerializer(serializers.Serializer):
         name = serializers.CharField(required=True)
@@ -134,12 +168,15 @@ class QuizViewSet(ViewSet):
 
     def list(self, request):
         user = request.user
+        page_number = int(request.GET.get('page_number', 1))
+        limit = self.page_size
+        offset = (page_number - 1) * self.page_size
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(400, "Only for admin users")
 
+        quiz = Quiz.objects.all()[offset:offset + limit]
         if user.isStaff():
-            quiz = Quiz.objects.filter(owner=user).all()
-        quiz = Quiz.objects.all()
+            quiz = Quiz.objects.filter(owner=user).all()[offset:offset + limit]
 
         serializer = ListQuizSerializer(quiz, many=True)
 
@@ -218,8 +255,21 @@ class QuizViewSet(ViewSet):
 
 
 class LatestQuizzesView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
-        quiz = Quiz.objects.filter(is_approved=True, is_completed=False).order_by('created_at', 'updated_at').all()
+        user = request.user
+        attempt = int(request.GET.get('attempt', 0))
+        if not user.is_anonymous:
+            user_quizzes = UserAttemptedQuiz.objects.filter(user=user,
+                                                            completed_at__isnull=not bool(attempt)).values_list(
+                'quiz_id').order_by('-completed_at').all()
+            user_quizzes = [i[0] for i in list(user_quizzes)]
+            quiz = (Quiz.objects
+                    .filter(is_approved=True, is_completed=False, id__in=user_quizzes)
+                    .all())
+        else:
+            quiz = Quiz.objects.filter(is_approved=True, is_completed=False).order_by('created_at', 'updated_at').all()
         serializer = QuizSerializer(quiz, many=True)
         return respond(200, "Success", serializer.data)
 
@@ -262,10 +312,11 @@ class UserQuizQuestionsView(APIView):
         if not quiz:
             return respond(400, "No quiz found with this id")
         user_quiz = UserAttemptedQuiz.objects.filter(user=user, quiz=quiz)
-        if not user_quiz.exists():
-            return respond(400, "Start Quiz before viewing all questions")
-        user_quiz = user_quiz.first()
-        quiz_question_ids = user_quiz.quiz.get_list_of_questions()
+        # if not user_quiz.exists():
+        #     return respond(400, "Start Quiz before viewing all questions")
+        # user_quiz = user_quiz.first()
+        # quiz_question_ids = user_quiz.quiz.get_list_of_questions()
+        quiz_question_ids = quiz.get_list_of_questions()
         quiz_question_objs = [Question.objects.filter(pk=pk).first() for pk in quiz_question_ids]
         serializer = self.OutputSerializer(quiz_question_objs, many=True)
         return respond(200, "Success", serializer.data)

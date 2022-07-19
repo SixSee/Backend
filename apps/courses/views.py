@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
-
+import re
 import apps.courses.models
 from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
@@ -15,6 +15,8 @@ from .helpers import get_latest_courses, style as style2
 from .models import Course, Topic, CourseReview
 from .serializers import CourseReviewSerializer
 from .. import courses
+from django.db.models import IntegerField
+from django.db.models.functions import Cast
 
 
 class CourseViewSet(ViewSet):
@@ -98,9 +100,15 @@ class CourseViewSet(ViewSet):
         question.save()
         return respond(200, "Success")
 
+
 class CourseTopicViewSet(ViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     lookup_field = 'topic_slug'
+
+    def _human_key(self, key):
+        parts = re.split('(\d*\.\d+|\d+)', key)
+        return tuple((e.swapcase() if i % 2 == 0 else float(e))
+                     for i, e in enumerate(parts))
 
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True)
@@ -113,8 +121,9 @@ class CourseTopicViewSet(ViewSet):
             exclude = ['course']
 
     def list(self, request, course_slug=None):
-        user = request.user
-        topics = Topic.objects.filter(course__slug=course_slug, course__is_archived=False).order_by('index')
+        topics = Topic.objects.filter(course__slug=course_slug, course__is_archived=False).all()
+        topics = list(topics)
+        topics.sort(key=lambda x: self._human_key(x.index))
         serializer = self.OutputSerializer(topics, many=True)
         return respond(200, "Success", serializer.data)
 
@@ -139,14 +148,6 @@ class CourseTopicViewSet(ViewSet):
             return respond(200, "Failure", serializer.errors)
 
         if course.owner == user or user.isAdmin():
-            # # Check if index does not exists previously
-            # index = serializer.validated_data.get('index')
-            # topic_index_exists = (Topic.objects
-            #                       .filter(course__slug=course_slug, index=index)
-            #                       .exists())
-            # if topic_index_exists:
-            #     # shift down other topics
-            #     dao_handler.topic_dao.shift_topics_down(index, course)
 
             topic = dao_handler.topic_dao.create_topic(course=course, **serializer.validated_data)
             return respond(200, "Success")
@@ -163,15 +164,6 @@ class CourseTopicViewSet(ViewSet):
         serializer = self.InputSerializer(data=body)
         if not serializer.is_valid():
             return respond(200, "Failure", serializer.errors)
-
-        # Check if index does not exists previously
-        # index = serializer.validated_data.get('index')
-        # topic_index_exists = (Topic.objects.
-        #                       filter(course__slug=course_slug, index=index)
-        #                       .exists())
-        # if topic_index_exists:
-        #     # shift down other topics
-        #     dao_handler.topic_dao.shift_topics_down(index, topic.course)
         dao_handler.topic_dao.save_from_dict(serializer.validated_data, topic)
         return respond(200, "Success")
 
@@ -308,4 +300,3 @@ class CourseEPUBView(APIView):
         except IOError:
             response = HttpResponseNotFound('<h1>File not exist</h1>')
         return response
-
