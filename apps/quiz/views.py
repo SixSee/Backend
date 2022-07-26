@@ -1,5 +1,4 @@
 from datetime import timedelta
-
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.decorators import action
@@ -382,13 +381,14 @@ class UserCompleteQuiz(APIView):
         no_of_attempted_questions = serializers.SerializerMethodField()
         user = UserSerializer()
         attempts = serializers.SerializerMethodField()
+        unattempted = serializers.SerializerMethodField()
         user_quiz_id = serializers.SerializerMethodField()
 
         class Meta:
             model = UserAttemptedQuiz
-            fields = ("user_quiz_id", "user", "started_at",
-                      "completed_at", "no_of_attempted_questions",
-                      "attempts")
+            fields = ("user_quiz_id", 'unattempted', "no_of_attempted_questions",
+                      "attempts", "user", "started_at",
+                      "completed_at",)
 
         def get_user_quiz_id(self, instance):
             return instance.id
@@ -403,9 +403,18 @@ class UserCompleteQuiz(APIView):
             serializer = UserAttemptedQuestionSerializer(attempted_question_objs, many=True)
             return serializer.data
 
+        def get_unattempted(self, instance):
+            attempted = instance.get_list_of_attempted_questions()
+            all_que = instance.quiz.get_list_of_questions()
+            attempted_que_ids = [UserAttemptedQuestion.objects.values_list('question').get(pk=attempt_id)[0] for
+                                 attempt_id in attempted]
+            unattempted_que_ids = list(set(all_que) - set(attempted_que_ids))
+            unattempted_que_objs = [Question.objects.get(pk=pk) for pk in unattempted_que_ids]
+            serializer = QuestionSerializer(unattempted_que_objs, many=True)
+            return serializer.data
+
     def post(self, request, pk=None):
         user = request.user
-
         quiz = Quiz.objects.filter(pk=pk).first()
         if not quiz:
             return respond(400, "No quiz found with this id")
@@ -413,10 +422,64 @@ class UserCompleteQuiz(APIView):
         user_quiz = quiz.userattemptedquiz_set.filter(user=user).first()
         if not user_quiz:
             return respond(400, "Quiz not started")
-        user_quiz.completed_at = timezone.now()
-        user_quiz.save()
+        if user_quiz.completed_at is None:
+            user_quiz.completed_at = timezone.now()
+            user_quiz.save()
         serializer = self.OutputSerializer(user_quiz)
         return respond(200, "Success", serializer.data)
+
+
+class UserQuizResult(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    class OutputSerializer(serializers.ModelSerializer):
+        no_of_attempted_questions = serializers.SerializerMethodField()
+        user = UserSerializer()
+        attempts = serializers.SerializerMethodField()
+        unattempted = serializers.SerializerMethodField()
+        user_quiz_id = serializers.SerializerMethodField()
+
+        class Meta:
+            model = UserAttemptedQuiz
+            fields = ("user_quiz_id", 'unattempted', "no_of_attempted_questions",
+                      "attempts", "user", "started_at",
+                      "completed_at",)
+
+        def get_user_quiz_id(self, instance):
+            return instance.id
+
+        def get_no_of_attempted_questions(self, instance):
+            return instance.no_of_attempted_questions()
+
+        def get_attempts(self, instance):
+            attempted_question_ids = instance.get_list_of_attempted_questions()
+            attempted_question_objs = [UserAttemptedQuestion.objects.get(pk=pk)
+                                       for pk in attempted_question_ids]
+            serializer = UserAttemptedQuestionSerializer(attempted_question_objs, many=True)
+            return serializer.data
+
+        def get_unattempted(self, instance):
+            attempted = instance.get_list_of_attempted_questions()
+            all_que = instance.quiz.get_list_of_questions()
+            attempted_que_ids = [UserAttemptedQuestion.objects.values_list('question').get(pk=attempt_id)[0] for
+                                 attempt_id in attempted]
+            unattempted_que_ids = list(set(all_que) - set(attempted_que_ids))
+            unattempted_que_objs = [Question.objects.get(pk=pk) for pk in unattempted_que_ids]
+            serializer = QuestionSerializer(unattempted_que_objs, many=True)
+            return serializer.data
+
+        def get(self, request, pk=None):
+            user = request.user
+            quiz = Quiz.objects.filter(pk=pk).first()
+            if not quiz:
+                return respond(400, "No quiz found with this id")
+
+            user_quiz = quiz.userattemptedquiz_set.filter(user=user).first()
+            if not user_quiz:
+                return respond(400, "Quiz not started")
+            serializer = self.OutputSerializer(user_quiz)
+            return respond(200, "Success", serializer.data)
 
 
 class QuizIsRunningView(APIView):

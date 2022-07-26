@@ -88,7 +88,7 @@ class CourseViewSet(ViewSet):
         return respond(200, "Success")
 
     @action(detail=True, methods=['post'], url_path='approve')
-    def approve_question(self, request, slug=None):
+    def approve_course(self, request, slug=None):
         user = request.user
         if not user.isAdmin():
             return respond(400, "Only for admin users")
@@ -97,7 +97,7 @@ class CourseViewSet(ViewSet):
         if not course:
             return respond(400, "No course with this slug")
         course.is_approved = not course.is_approved
-        question.save()
+        course.save()
         return respond(200, "Success")
 
 
@@ -202,7 +202,7 @@ class CourseReviewView(APIView):
         course = dao_handler.course_dao.get_by_slug(course_slug)
 
         if not course:
-            return respond(200, "No course with this slug")
+            return respond(404, "No course with this slug")
         reviewAlready = CourseReview.objects.filter(course=course, review_by=user).first()
         if reviewAlready:
             return respond(400, "Only one review allowed per user")

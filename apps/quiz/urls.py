@@ -3,7 +3,7 @@ from rest_framework import routers
 
 from .views import (ListSubjectsView, QuestionViewSet, QuizViewSet, LatestQuizzesView, StartQuizView,
                     UserQuizQuestionsView, UserQuizAttemptView, UserCompleteQuiz, QuizIsRunningView,
-                    GetListAttemptedQuizzes, RunningQuizStatus)
+                    GetListAttemptedQuizzes, RunningQuizStatus, UserQuizResult)
 
 router = routers.SimpleRouter()
 router.register(r'question', QuestionViewSet, basename='question')
@@ -18,6 +18,7 @@ urlpatterns = [
     path('start-quiz/<int:pk>/questions', UserQuizQuestionsView.as_view()),
     path('start-quiz/<int:pk>/attempt-question', UserQuizAttemptView.as_view()),
     path('start-quiz/<int:pk>/complete', UserCompleteQuiz.as_view()),
+    path('start-quiz/<int:pk>/result', UserQuizResult.as_view()),
     path('start-quiz/<int:pk>/status', RunningQuizStatus.as_view()),
     path('is-running/', QuizIsRunningView.as_view()),
     path('attempted-quizzes/', GetListAttemptedQuizzes.as_view()),
