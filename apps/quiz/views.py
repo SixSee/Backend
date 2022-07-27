@@ -33,6 +33,8 @@ class QuestionViewSet(ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         query = self.request.GET.get('q', None)
+        if user.is_anonymous:
+            return respond(400, "Login required")
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(200, "Only for admin or staff users")
 
@@ -430,7 +432,6 @@ class UserCompleteQuiz(APIView):
 
 
 class UserQuizResult(APIView):
-
     permission_classes = [IsAuthenticated]
 
     class OutputSerializer(serializers.ModelSerializer):
@@ -469,17 +470,17 @@ class UserQuizResult(APIView):
             serializer = QuestionSerializer(unattempted_que_objs, many=True)
             return serializer.data
 
-        def get(self, request, pk=None):
-            user = request.user
-            quiz = Quiz.objects.filter(pk=pk).first()
-            if not quiz:
-                return respond(400, "No quiz found with this id")
+    def get(self, request, pk=None):
+        user = request.user
+        quiz = Quiz.objects.filter(pk=pk).first()
+        if not quiz:
+            return respond(400, "No quiz found with this id")
 
-            user_quiz = quiz.userattemptedquiz_set.filter(user=user).first()
-            if not user_quiz:
-                return respond(400, "Quiz not started")
-            serializer = self.OutputSerializer(user_quiz)
-            return respond(200, "Success", serializer.data)
+        user_quiz = quiz.userattemptedquiz_set.filter(user=user).first()
+        if not user_quiz:
+            return respond(400, "Quiz not started")
+        serializer = self.OutputSerializer(user_quiz)
+        return respond(200, "Success", serializer.data)
 
 
 class QuizIsRunningView(APIView):
