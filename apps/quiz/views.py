@@ -263,13 +263,12 @@ class LatestQuizzesView(APIView):
         attempt = int(request.GET.get('attempt', 0))
         if not user.is_anonymous:
             user_quizzes = UserAttemptedQuiz.objects.filter(user=user,
-                                                            completed_at__isnull=not bool(attempt)).values_list(
+                                                            completed_at__isnull=bool(attempt)).values_list(
                 'quiz_id').order_by('-completed_at').all()
             user_quizzes = [i[0] for i in list(user_quizzes)]
             quiz = (Quiz.objects
                     .filter(is_approved=True, is_completed=False).exclude(id__in=user_quizzes)
                     .all())
-            print(quiz)
         else:
             quiz = Quiz.objects.filter(is_approved=True, is_completed=False).order_by('created_at', 'updated_at').all()
         serializer = QuizSerializer(quiz, many=True)
