@@ -267,8 +267,9 @@ class LatestQuizzesView(APIView):
                 'quiz_id').order_by('-completed_at').all()
             user_quizzes = [i[0] for i in list(user_quizzes)]
             quiz = (Quiz.objects
-                    .filter(is_approved=True, is_completed=False, id__in=user_quizzes)
+                    .filter(is_approved=True, is_completed=False).exclude(id__in=user_quizzes)
                     .all())
+            print(quiz)
         else:
             quiz = Quiz.objects.filter(is_approved=True, is_completed=False).order_by('created_at', 'updated_at').all()
         serializer = QuizSerializer(quiz, many=True)
