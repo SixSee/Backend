@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet, ModelViewSet
+from rest_framework.exceptions import PermissionDenied
 
 from Excelegal.helpers import respond
 from apps.authentication.serializers import UserSerializer
@@ -36,7 +37,7 @@ class QuestionViewSet(ModelViewSet):
         if user.is_anonymous:
             return respond(400, "Login required")
         if not (user.is_superuser or (user.role >= user.STAFF)):
-            return respond(200, "Only for admin or staff users")
+            raise PermissionDenied(detail='Only for admin or staff users')
 
         if user.isStaff():
             qs = Question.objects.filter(created_by=user).all()
@@ -169,7 +170,7 @@ class QuizViewSet(ViewSet):
 
     def list(self, request):
         user = request.user
-        page_number = int(request.GET.get('page_number', 1))
+        page_number = int(request.GET.get('page', 1))
         limit = self.page_size
         offset = (page_number - 1) * self.page_size
         if not (user.is_superuser or (user.role >= user.STAFF)):
