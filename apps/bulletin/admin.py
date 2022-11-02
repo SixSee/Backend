@@ -7,16 +7,15 @@ from .models import Bulletin
 @admin.register(Bulletin)
 class BulletinAdmin(admin.ModelAdmin):
     list_display = (
-        'id',
         'title',
         'slug',
-        'visible',
         'owner',
-        'category',
-        'action_title',
-        'action_link',
+        'image',
+        'description',
+        'visible',
         'created_at',
         'updated_at',
+        'id',
     )
     list_filter = ('owner', 'visible', 'created_at', 'updated_at')
     search_fields = ('slug',)

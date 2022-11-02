@@ -13,16 +13,16 @@ class BulletinView(APIView):
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(required=True)
         description = serializers.CharField(required=True)
-        category = serializers.CharField(required=True)
-        action_title = serializers.CharField(required=True)
-        action_link = serializers.URLField(required=True)
+        # category = serializers.CharField(required=True)
+        # action_title = serializers.CharField(required=True)
+        # action_link = serializers.URLField(required=True)
+        image = serializers.ImageField(required=False, allow_null=False, allow_empty_file=False)
 
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
             model = Bulletin
-            fields = ('title', 'slug', 'owner',
-                      'description', 'action_title', 'action_link',
-                      'visible', 'category', 'created_at', 'updated_at')
+            fields = ('title', 'slug', 'owner', 'image',
+                      'description', 'visible', 'created_at', 'updated_at')
 
     def get(self, request):
         user = request.user
@@ -44,6 +44,7 @@ class BulletinView(APIView):
         if not serializer.is_valid():
             return respond(400, "Failure", serializer.errors)
         bull_obj = Bulletin.objects.create(owner=user, **serializer.validated_data)
+        bull_obj.save()
         return respond(200, "Success")
 
     def put(self, request):
@@ -88,9 +89,8 @@ class SingleBulletinView(APIView):
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
             model = Bulletin
-            fields = ('title', 'slug', 'owner',
-                      'description', 'action_title', 'action_link',
-                      'visible', 'category', 'created_at', 'updated_at')
+            fields = ('title', 'slug', 'owner', 'image',
+                      'description', 'visible', 'created_at', 'updated_at')
 
     def get(self, request, slug):
         user = request.user
