@@ -11,8 +11,7 @@ from .settings import MEDIA_URL, MEDIA_ROOT, STATIC_ROOT, STATIC_URL
 
 
 def home(request: django.http.HttpRequest):
-    return HttpResponse(
-        f"Api server running. <a href='{request.scheme}://{request.META['SERVER_NAME']}:{request.META['SERVER_PORT']}{request.path}swagger'>Swagger here!</a>")
+    return HttpResponse("Api server running.")
 
 
 schema_view = get_schema_view(
@@ -26,7 +25,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
     path('auth/', include('apps.authentication.urls')),
     path('', include('apps.courses.urls')),
     path('blog/', include('apps.blogs.urls')),
@@ -37,7 +36,7 @@ urlpatterns = [
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    path('', admin.site.urls, name="HOME")
+    path('', home, name="HOME")
 ]
 
 urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)
