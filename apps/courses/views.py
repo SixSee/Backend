@@ -26,7 +26,7 @@ class CourseViewSet(ViewSet):
 
         class Meta:
             model = Course
-            fields = ['id', 'title', 'is_archived', 'image', 'slug', 'description', 'reviews']
+            fields = ['id', 'title', 'is_archived', 'image', 'slug', 'description', 'reviews', 'is_approved']
             depth = 1
 
     class InputSerializer(serializers.Serializer):
