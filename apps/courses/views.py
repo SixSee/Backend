@@ -1,12 +1,13 @@
+import re
+
 from django.http import HttpResponse, HttpResponseNotFound
-from django.utils import timezone
 from ebooklib import epub
 from rest_framework import serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
-import re
+
 import apps.courses.models
 from Excelegal.dao import dao_handler
 from Excelegal.helpers import respond
@@ -14,9 +15,6 @@ from apps.authentication.serializers import UserSerializer
 from .helpers import get_latest_courses, style as style2
 from .models import Course, Topic, CourseReview
 from .serializers import CourseReviewSerializer
-from .. import courses
-from django.db.models import IntegerField
-from django.db.models.functions import Cast
 
 
 class CourseViewSet(ViewSet):
@@ -60,7 +58,7 @@ class CourseViewSet(ViewSet):
             return respond(200, "Fail", serializer.errors)
         if user.isStudent():
             return respond(200, "You dont have permission to create courses")
-        course = dao_handler.course_dao.create_course(**serializer.validated_data, owner=user)
+        course = Course.objects.create(owner=user, **serializer.validated_data)
         return respond(200, "Success")
 
     def update(self, request, slug=None):
