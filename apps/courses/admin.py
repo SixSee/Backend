@@ -11,7 +11,7 @@ class CourseAdmin(admin.ModelAdmin):
         'title',
         'slug',
         'is_archived',
-        'is_live',
+        'is_approved',
         'owner',
         'image',
         'created_at',
@@ -20,7 +20,7 @@ class CourseAdmin(admin.ModelAdmin):
     list_filter = (
         'owner',
         'is_archived',
-        'is_live',
+        'is_approved',
         'created_at',
         'updated_at',
     )
