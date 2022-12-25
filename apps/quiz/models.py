@@ -28,7 +28,7 @@ class Question(models.Model):
     name = models.TextField()
     difficulty = models.CharField(max_length=15, choices=QuestionDifficulty.choices, default=QuestionDifficulty.easy)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
-    explanation = models.TextField()
+    explanation = models.TextField(default='', blank=True, null=True)
     is_approved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
