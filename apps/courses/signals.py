@@ -23,5 +23,5 @@ def set_slug_topic(sender, instance, *args, **kwargs):
 
     prev_instance = Topic.objects.filter(pk=instance.pk).first()
 
-    if prev_instance and prev_instance.title is not instance.title:
+    if prev_instance and (prev_instance.title != instance.title):
         instance.slug = unique_slug_generator(Topic, instance.title)

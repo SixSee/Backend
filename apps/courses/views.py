@@ -111,7 +111,7 @@ class CourseTopicViewSet(ViewSet):
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True)
         index = serializers.CharField(required=True)
-        text = serializers.CharField(required=True)
+        text = serializers.CharField(required=False)
 
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
