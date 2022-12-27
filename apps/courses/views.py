@@ -111,7 +111,7 @@ class CourseTopicViewSet(ViewSet):
     class InputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=True)
         index = serializers.CharField(required=True)
-        text = serializers.CharField(required=False)
+        text = serializers.CharField(required=False, allow_blank=True)
 
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
@@ -161,6 +161,8 @@ class CourseTopicViewSet(ViewSet):
 
         serializer = self.InputSerializer(data=body)
         if not serializer.is_valid():
+            print(serializer.data)
+
             return respond(200, "Failure", serializer.errors)
         dao_handler.topic_dao.save_from_dict(serializer.validated_data, topic)
         return respond(200, "Success")
