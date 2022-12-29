@@ -1,6 +1,7 @@
+import os
 from datetime import timedelta
 from pathlib import Path
-import os
+
 import env
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'apps.bulletin.apps.BulletinConfig',
     'apps.classes.apps.ClassesConfig',
     'apps.internship.apps.InternshipConfig',
+    'apps.links.apps.LinksConfig'
 ]
 
 AUTH_USER_MODEL = "authentication.User"
