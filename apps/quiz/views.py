@@ -1,11 +1,14 @@
 from datetime import timedelta
+
+from django.db.models import Q
 from django.utils import timezone
+from rest_framework import pagination
 from rest_framework import serializers
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet, ModelViewSet
-from rest_framework.exceptions import PermissionDenied
 
 from Excelegal.helpers import respond
 from apps.authentication.serializers import UserSerializer
@@ -13,9 +16,6 @@ from .helpers import get_random_questions_for_quiz
 from .models import Subjects, Question, Quiz, UserAttemptedQuiz, UserAttemptedQuestion
 from .serializers import (QuestionSerializer, SubjectsSerializer, ListQuizSerializer, QuizSerializer,
                           QuestionChoiceSerializer_wo_correct, UserAttemptedQuestionSerializer)
-
-from rest_framework import pagination
-from django.db.models import Q
 
 
 class StandardResultsPagination(pagination.PageNumberPagination):
