@@ -39,6 +39,8 @@ class CourseViewSet(ViewSet):
         user = request.user
         if not user.is_anonymous and user.isAdmin():
             courses = Course.objects.order_by('id').all()
+        elif not user.is_anonymous and user.isStaff():
+            courses = Course.objects.filter(owner=user).order_by('id').all()
         else:
             courses = Course.objects.filter(is_archived=False, is_approved=True).order_by('id').all()
         serializer = self.OutputSerializer(courses, many=True)
