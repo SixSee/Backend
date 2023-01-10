@@ -24,6 +24,6 @@ def get_random_questions_for_quiz(quiz_obj: Quiz):
     random.shuffle(question_set)
     if quiz_obj.no_of_questions < 10:
         raise Exception("At least 10 question are required for a quiz")
-    if len(question_set) != quiz_obj.no_of_questions:
+    if len(question_set) < quiz_obj.no_of_questions:
         raise Exception("Not enough questions for these subjects")
     return question_set[:quiz_obj.no_of_questions]
