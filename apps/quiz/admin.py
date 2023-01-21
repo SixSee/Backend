@@ -16,6 +16,7 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
+        'view_subjects',
         'is_approved',
         'difficulty',
         'created_by',
@@ -27,6 +28,15 @@ class QuestionAdmin(admin.ModelAdmin):
     raw_id_fields = ('courses', 'subjects')
     search_fields = ('name',)
     date_hierarchy = 'created_at'
+
+    @admin.display(empty_value='???')
+    def view_subjects(self, obj):
+        return "\n".join([p.name for p in obj.subjects.all()])
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "subjects":
+            kwargs["queryset"] = Subjects.objects.all()
+        return super(QuestionAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 
 @admin.register(QuestionChoice)
