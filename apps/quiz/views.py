@@ -170,15 +170,17 @@ class QuizViewSet(ViewSet):
 
     def list(self, request):
         user = request.user
-        page_number = int(request.GET.get('page', 1))
-        limit = self.page_size
-        offset = (page_number - 1) * self.page_size
+        # page_number = int(request.GET.get('page', 1))
+        # limit = self.page_size
+        # offset = (page_number - 1) * self.page_size
         if not (user.is_superuser or (user.role >= user.STAFF)):
             return respond(400, "Only for admin users")
 
-        quiz = Quiz.objects.all()[offset:offset + limit]
+        # quiz = Quiz.objects.all()[offset:offset + limit]
+        quiz = Quiz.objects.all().order_by('created_at', 'updated_at')
         if user.isStaff():
-            quiz = Quiz.objects.filter(owner=user).all()[offset:offset + limit]
+            # quiz = Quiz.objects.filter(owner=user).all()[offset:offset + limit]
+            quiz = Quiz.objects.filter(owner=user).order_by('created_at', 'updated_at')
 
         serializer = ListQuizSerializer(quiz, many=True)
 
