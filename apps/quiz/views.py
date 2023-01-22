@@ -180,7 +180,7 @@ class QuizViewSet(ViewSet):
         quiz = Quiz.objects.all().order_by('created_at', 'updated_at')
         if user.isStaff():
             # quiz = Quiz.objects.filter(owner=user).all()[offset:offset + limit]
-            quiz = Quiz.objects.filter(owner=user).order_by('created_at', 'updated_at')
+            quiz = Quiz.objects.filter(owner=user).order_by('-created_at', '-updated_at')
 
         serializer = ListQuizSerializer(quiz, many=True)
 
