@@ -177,7 +177,7 @@ class QuizViewSet(ViewSet):
             return respond(400, "Only for admin users")
 
         # quiz = Quiz.objects.all()[offset:offset + limit]
-        quiz = Quiz.objects.all().order_by('created_at', 'updated_at')
+        quiz = Quiz.objects.all().order_by('-created_at', '-updated_at')
         if user.isStaff():
             # quiz = Quiz.objects.filter(owner=user).all()[offset:offset + limit]
             quiz = Quiz.objects.filter(owner=user).order_by('-created_at', '-updated_at')
